@@ -46,6 +46,10 @@
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
       Plan de Ahorro
     </button>
+    <button class="nav-item" id="nav-reuse" onclick="switchTab('reuse')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+      Reutilizar Periodo
+    </button>
 
     <span class="nav-section-label" style="margin-top:auto;">Sistema</span>
     <button class="nav-item" id="nav-settings" onclick="switchTab('settings')">
@@ -100,8 +104,8 @@
           <div class="stat-card blue">
             <div class="stat-label">
               Balance Total
-              <button class="eye-btn" id="eye-btn-balance" onclick="togglePrivacy('balance')" title="Mostrar/Ocultar">
-                <svg xmlns="http://www.w3.org/2000/svg" id="eye-icon-balance" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+              <button class="eye-btn" id="eye-btn-balance" onclick="togglePrivacy('balance')" title="Ocultar Balance" style="padding:8px; border-radius:6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
               </button>
             </div>
             <div class="stat-value" id="stat-balance">$0</div>
@@ -109,8 +113,8 @@
           <div class="stat-card green">
             <div class="stat-label">
               Ingresos del Periodo
-              <button class="eye-btn" id="eye-btn-income" onclick="togglePrivacy('income')" title="Mostrar/Ocultar">
-                <svg xmlns="http://www.w3.org/2000/svg" id="eye-icon-income" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+              <button class="eye-btn" id="eye-btn-income" onclick="togglePrivacy('income')" title="Ocultar Ingresos" style="padding:8px; border-radius:6px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
               </button>
             </div>
             <div class="stat-value positive" id="stat-income">$0</div>
@@ -211,6 +215,53 @@
         </div>
       </section>
 
+      <!-- ════ TAB: Reutilizar Periodo ════ -->
+      <section class="tab-section" id="tab-reuse">
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1.25rem;">Selecciona el Periodo de Origen</div>
+          <div style="display:flex; flex-wrap:wrap; gap:1rem; align-items:flex-end; margin-bottom:1.25rem;">
+            <div>
+              <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-faint); display:block; margin-bottom:4px;">Desde</label>
+              <input type="date" id="reuse-src-start" style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:0.55rem 0.875rem; font-family:Outfit,sans-serif;">
+            </div>
+            <div>
+              <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-faint); display:block; margin-bottom:4px;">Hasta</label>
+              <input type="date" id="reuse-src-end" style="background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; color:var(--text); padding:0.55rem 0.875rem; font-family:Outfit,sans-serif;">
+            </div>
+            <button class="btn btn-ghost" onclick="renderReusePanel()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>
+              Cargar Periodo
+            </button>
+          </div>
+
+          <p id="reuse-info" style="font-size:0.825rem; color:var(--text-muted); margin-bottom:1rem;"></p>
+
+          <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr style="border-bottom:1px solid var(--border);">
+                  <th style="text-align:left; padding:0.5rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-faint);">Tipo</th>
+                  <th style="text-align:left; padding:0.5rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-faint);">Descripción</th>
+                  <th style="text-align:left; padding:0.5rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-faint);">Categoría</th>
+                  <th style="text-align:left; padding:0.5rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-faint);">Nuevo Monto</th>
+                  <th style="text-align:left; padding:0.5rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-faint);">Nueva Fecha</th>
+                </tr>
+              </thead>
+              <tbody id="reuse-tbody">
+                <tr><td colspan="5" class="empty-state">Selecciona un rango de fechas y presiona “Cargar Periodo”.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:1.5rem; display:flex; justify-content:flex-end;">
+            <button class="btn btn-primary" onclick="applyReuse()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+              Aplicar como Nuevo Periodo
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- ════ TAB: CONFIGURACIÓN ════ -->
       <section class="tab-section" id="tab-settings">
         <div class="card">
@@ -242,9 +293,23 @@
           <div class="divider"></div>
 
           <div class="settings-group">
+            <h3>👤 Perfiles</h3>
+            <p class="text-muted text-sm" style="margin-bottom:1rem;">Cambia de perfil o administra los usuarios de esta aplicación.</p>
+            <div class="btn-group">
+              <button class="btn btn-ghost" onclick="switchProfile()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5 4.5 4.5m0 0L16.5 12M21 7.5H7.5"/></svg>
+                Cambiar Perfil
+              </button>
+              <button class="btn btn-danger" onclick="deleteCurrentProfile()">Eliminar este Perfil</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="settings-group">
             <h3 style="color:var(--danger);">⚠️ Zona de Peligro</h3>
-            <p class="text-muted text-sm" style="margin-bottom:1rem;">Esta acción eliminará todos tus datos permanentemente.</p>
-            <button class="btn btn-danger" onclick="clearAllData()">Borrar Todos los Datos</button>
+            <p class="text-muted text-sm" style="margin-bottom:1rem;">Borra todos los datos del perfil activo.</p>
+            <button class="btn btn-danger" onclick="clearAllData()">Borrar Datos de Este Perfil</button>
           </div>
         </div>
       </section>
@@ -270,6 +335,10 @@
   <button class="mobile-nav-item" id="mnav-savings" onclick="switchTab('savings')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
     <span>Ahorro</span>
+  </button>
+  <button class="mobile-nav-item" id="mnav-reuse" onclick="switchTab('reuse')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+    <span>Reutilizar</span>
   </button>
   <button class="mobile-nav-item" id="mnav-settings" onclick="switchTab('settings')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.432l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.432l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
@@ -323,6 +392,78 @@
       </div>
       <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">Guardar Transacción</button>
     </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ PROFILE SCREEN ═══════════════════ -->
+<div id="profile-screen" class="profile-screen">
+  <div class="profile-logo-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 0v20M2 12h20"/></svg>
+  </div>
+  <div class="profile-logo-name">Finance<span>-Ang</span></div>
+  <div class="profile-heading">¿Quién va a registrar las finanzas hoy?</div>
+
+  <div class="profiles-grid" id="profiles-grid">
+    <!-- JS populated -->
+  </div>
+  <button class="profile-add-btn" onclick="openCreateProfile()">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+    Nuevo Perfil
+  </button>
+</div>
+
+<!-- ═══════════════════ PIN OVERLAY ═══════════════════ -->
+<div id="pin-overlay" class="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-avatar" id="pin-avatar">A</div>
+    <div class="pin-name"  id="pin-name">Perfil</div>
+    <div class="pin-label">Ingresa tu PIN de 4 dígitos</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="dot-0"></div>
+      <div class="pin-dot" id="dot-1"></div>
+      <div class="pin-dot" id="dot-2"></div>
+      <div class="pin-dot" id="dot-3"></div>
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <div class="pin-pad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" onclick="closePinOverlay()" style="font-size:0.8rem; color:var(--text-muted);">Cancelar</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key" onclick="pinBackspace()" style="font-size:1rem;">⌫</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CREATE PROFILE ═══════════════════ -->
+<div id="create-profile-overlay" class="create-profile-overlay">
+  <div class="create-profile-box">
+    <div class="modal-header" style="margin-bottom:1.5rem;">
+      <h3>Nuevo Perfil</h3>
+      <button class="modal-close" onclick="closeCreateProfile()">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="form-group">
+      <label>Nombre</label>
+      <input type="text" id="new-profile-name" placeholder="Ej: Angel, María..." maxlength="20">
+    </div>
+    <div class="form-group">
+      <label>Color del Avatar</label>
+      <div class="color-swatches" id="color-swatches"></div>
+    </div>
+    <div class="form-group">
+      <label>PIN (opcional, 4 dígitos)</label>
+      <input type="password" id="new-profile-pin" placeholder="Dejar vacío para sin PIN" maxlength="4" inputmode="numeric">
+    </div>
+    <button class="btn btn-primary" style="width:100%; margin-top:0.5rem;" onclick="saveNewProfile()">Crear Perfil</button>
   </div>
 </div>
 
