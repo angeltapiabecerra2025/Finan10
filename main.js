@@ -95,14 +95,19 @@ function checkAuthPin() {
 
 // ── ENTER APP ──────────────────────────────────────────────────────────────────
 function enterApp() {
-  document.getElementById('auth-screen').classList.add('hidden');
+  // Hide auth, show app
+  document.getElementById('auth-screen').style.display  = 'none';
+  document.getElementById('app-layout').style.display   = '';
+  document.getElementById('mobile-nav').style.display   = '';
+
   loadState();
   setCurrentMonth();
   document.getElementById('tx-date').value = today();
   initCharts();
   renderAll();
   applyPrivacyIcons();
-  // Populate the user name in settings
+
+  // Show user name in settings
   const user = getSavedUser();
   const el = document.getElementById('settings-username');
   if (el && user) el.textContent = user.name;

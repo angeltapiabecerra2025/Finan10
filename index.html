@@ -16,8 +16,72 @@
 </head>
 <body>
 
-<!-- ───── LAYOUT ───────────────────────────────── -->
-<div class="layout">
+<!-- ═══════════ AUTH SCREEN — primer elemento del body ═══════════ -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-box">
+
+    <!-- Logo -->
+    <div style="text-align:center; margin-bottom:2rem;">
+      <div class="profile-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 0v20M2 12h20"/></svg>
+      </div>
+      <div class="profile-logo-name" style="margin-top:0.75rem;">Finance<span>-Ang</span></div>
+    </div>
+
+    <!-- PANEL: REGISTRO (primera vez) -->
+    <div id="register-panel">
+      <p style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">Bienvenido. Configura tu cuenta para empezar.</p>
+      <div class="form-group">
+        <label>Tu Nombre</label>
+        <input type="text" id="reg-name" placeholder="Ej: Angel" maxlength="30" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>PIN (4 dígitos)</label>
+        <input type="password" id="reg-pin" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirmar PIN</label>
+        <input type="password" id="reg-pin-confirm" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="new-password">
+      </div>
+      <p id="reg-error" class="auth-error"></p>
+      <button class="btn btn-primary" style="width:100%;" onclick="submitRegister()">Crear Cuenta</button>
+    </div>
+
+    <!-- PANEL: LOGIN (vuelve) -->
+    <div id="login-panel" style="display:none;">
+      <div style="text-align:center; margin-bottom:1.75rem;">
+        <div class="auth-avatar" id="login-initial">A</div>
+        <div class="auth-username" id="login-name">Usuario</div>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.35rem;">Ingresa tu PIN para continuar</p>
+      </div>
+      <div class="auth-dots">
+        <div class="pin-dot" id="auth-dot-0"></div>
+        <div class="pin-dot" id="auth-dot-1"></div>
+        <div class="pin-dot" id="auth-dot-2"></div>
+        <div class="pin-dot" id="auth-dot-3"></div>
+      </div>
+      <p class="auth-error" id="auth-pin-error"></p>
+      <div class="auth-pad">
+        <button class="pin-key" onclick="authPinKey('1')">1</button>
+        <button class="pin-key" onclick="authPinKey('2')">2</button>
+        <button class="pin-key" onclick="authPinKey('3')">3</button>
+        <button class="pin-key" onclick="authPinKey('4')">4</button>
+        <button class="pin-key" onclick="authPinKey('5')">5</button>
+        <button class="pin-key" onclick="authPinKey('6')">6</button>
+        <button class="pin-key" onclick="authPinKey('7')">7</button>
+        <button class="pin-key" onclick="authPinKey('8')">8</button>
+        <button class="pin-key" onclick="authPinKey('9')">9</button>
+        <button class="pin-key" style="font-size:0.72rem; color:var(--text-faint);" onclick="resetUser()">Restab.</button>
+        <button class="pin-key" onclick="authPinKey('0')">0</button>
+        <button class="pin-key" onclick="authPinBackspace()">⌫</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ───── LAYOUT (oculto hasta que se autentique) ──────────────── -->
+<div class="layout" id="app-layout" style="display:none;">
 
   <!-- SIDEBAR (desktop) -->
   <aside class="sidebar" id="sidebar">
@@ -313,8 +377,8 @@
   </div><!-- /main -->
 </div><!-- /layout -->
 
-<!-- MOBILE NAV -->
-<nav class="mobile-nav" id="mobile-nav">
+<!-- Barra de Navegación Móvil (oculta hasta autenticarse) -->
+<nav class="mobile-nav" id="mobile-nav" style="display:none;">
   <button class="mobile-nav-item active" id="mnav-dashboard" onclick="switchTab('dashboard')">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     <span>Inicio</span>
@@ -390,70 +454,8 @@
   </div>
 </div>
 
-<!-- ═══════════════════════ AUTH SCREEN ═══════════════════════ -->
-<div id="auth-screen" class="auth-screen">
-  <div class="auth-box">
-
-    <!-- Logo -->
-    <div style="text-align:center; margin-bottom:2rem;">
-      <div class="profile-logo-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 0v20M2 12h20"/></svg>
-      </div>
-      <div class="profile-logo-name" style="margin-top:0.75rem;">Finance<span>-Ang</span></div>
-    </div>
-
-    <!-- PANEL: REGISTRO (primera vez) -->
-    <div id="register-panel">
-      <p style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">Bienvenido. Configura tu cuenta para empezar.</p>
-      <div class="form-group">
-        <label>Tu Nombre</label>
-        <input type="text" id="reg-name" placeholder="Ej: Angel" maxlength="30" autocomplete="off">
-      </div>
-      <div class="form-group">
-        <label>PIN (4 dígitos)</label>
-        <input type="password" id="reg-pin" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="new-password">
-      </div>
-      <div class="form-group">
-        <label>Confirmar PIN</label>
-        <input type="password" id="reg-pin-confirm" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="new-password">
-      </div>
-      <p id="reg-error" class="auth-error"></p>
-      <button class="btn btn-primary" style="width:100%;" onclick="submitRegister()">Crear Cuenta</button>
-    </div>
-
-    <!-- PANEL: LOGIN (vuelve) -->
-    <div id="login-panel" style="display:none;">
-      <div style="text-align:center; margin-bottom:1.75rem;">
-        <div class="auth-avatar" id="login-initial">A</div>
-        <div class="auth-username" id="login-name">Usuario</div>
-        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.35rem;">Ingresa tu PIN para continuar</p>
-      </div>
-      <div class="auth-dots">
-        <div class="pin-dot" id="auth-dot-0"></div>
-        <div class="pin-dot" id="auth-dot-1"></div>
-        <div class="pin-dot" id="auth-dot-2"></div>
-        <div class="pin-dot" id="auth-dot-3"></div>
-      </div>
-      <p class="auth-error" id="auth-pin-error"></p>
-      <div class="auth-pad">
-        <button class="pin-key" onclick="authPinKey('1')">1</button>
-        <button class="pin-key" onclick="authPinKey('2')">2</button>
-        <button class="pin-key" onclick="authPinKey('3')">3</button>
-        <button class="pin-key" onclick="authPinKey('4')">4</button>
-        <button class="pin-key" onclick="authPinKey('5')">5</button>
-        <button class="pin-key" onclick="authPinKey('6')">6</button>
-        <button class="pin-key" onclick="authPinKey('7')">7</button>
-        <button class="pin-key" onclick="authPinKey('8')">8</button>
-        <button class="pin-key" onclick="authPinKey('9')">9</button>
-        <button class="pin-key" style="font-size:0.75rem; color:var(--text-faint);" onclick="resetUser()">Restab.</button>
-        <button class="pin-key" onclick="authPinKey('0')">0</button>
-        <button class="pin-key" onclick="authPinBackspace()">⌫</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
 <script src="main.js"></script>
+</body>
+</html>
 </body>
 </html>
