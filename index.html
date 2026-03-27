@@ -309,6 +309,30 @@
         }
     </style>
 
+    <!-- Barra de Navegación Móvil -->
+    <nav class="mobile-nav glass">
+        <a href="#" class="mobile-nav-link active" onclick="switchTab('dashboard')">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="#" class="mobile-nav-link" onclick="switchTab('transactions')">
+            <i data-lucide="arrow-up-right"></i>
+            <span>Transas.</span>
+        </a>
+        <a href="#" class="mobile-nav-link" onclick="switchTab('daily')">
+            <i data-lucide="zap"></i>
+            <span>Diario</span>
+        </a>
+        <a href="#" class="mobile-nav-link" onclick="switchTab('savings')">
+            <i data-lucide="piggy-bank"></i>
+            <span>Ahorro</span>
+        </a>
+        <a href="#" class="mobile-nav-link" onclick="switchTab('settings')">
+            <i data-lucide="settings"></i>
+            <span>Config.</span>
+        </a>
+    </nav>
+    
     <!-- Main Logic -->
     <script src="main.js"></script>
     <script>

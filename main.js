@@ -43,10 +43,14 @@ function clearAllData() {
 // --- UI Navigation ---
 
 function switchTab(tabId) {
-    // Update active link
-    document.querySelectorAll('.nav-link').forEach(link => {
+    // Update active links (Desktop & Mobile)
+    const links = [...document.querySelectorAll('.nav-link'), ...document.querySelectorAll('.mobile-nav-link')];
+    
+    links.forEach(link => {
         link.classList.remove('active');
-        if (link.innerText.toLowerCase().includes(tabId)) {
+        // Match by text or by the onclick attribute containing the tabId
+        const onClickAttr = link.getAttribute('onclick') || '';
+        if (onClickAttr.includes(`'${tabId}'`)) {
             link.classList.add('active');
         }
     });
