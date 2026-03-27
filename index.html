@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanceFlow | Gestión de Finanzas Personales</title>
+    <meta name="description" content="Tu aplicación premium para control de gastos, ingresos y planes de ahorro.">
+    
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Local Styles -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass">
+            <div class="logo">
+                <i data-lucide="wallet"></i>
+                <span>FinanceFlow</span>
+            </div>
+            
+            <nav class="nav-links">
+                <div class="nav-item">
+                    <a href="#" class="nav-link active" onclick="switchTab('dashboard')">
+                        <i data-lucide="layout-dashboard"></i> Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="switchTab('transactions')">
+                        <i data-lucide="arrow-up-right"></i> Transacciones
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="switchTab('daily')">
+                        <i data-lucide="zap"></i> Gasto Diario
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link" onclick="switchTab('savings')">
+                        <i data-lucide="piggy-bank"></i> Ahorro
+                    </a>
+                </div>
+            </nav>
+            
+            <div class="nav-item">
+                <a href="#" class="nav-link" onclick="switchTab('settings')">
+                    <i data-lucide="settings"></i> Configuración
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header Section -->
+            <header class="header">
+                <div>
+                    <h1 id="page-title">Dashboard</h1>
+                    <p class="text-muted" id="page-subtitle">Bienvenido de nuevo, acá está tu resumen.</p>
+                </div>
+                <button class="btn btn-primary" onclick="openModal('tx-modal')">
+                    <i data-lucide="plus"></i> Nueva Transacción
+                </button>
+            </header>
+
+            <!-- SECCIÓN: DASHBOARD -->
+            <section id="dashboard-section" class="tab-content">
+                <div class="balance-card glass">
+                    <div class="stat-item">
+                        <h3>Balance Total</h3>
+                        <div class="amount" id="total-balance">$0.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>Ingresos del Mes</h3>
+                        <div class="amount income" id="month-income">$0.00</div>
+                    </div>
+                    <div class="stat-item">
+                        <h3>Gastos del Mes</h3>
+                        <div class="amount expense" id="month-expense">$0.00</div>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="module-card glass">
+                        <div class="module-header">
+                            <span class="module-title">Resumen de Gastos</span>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="expenseChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="module-card glass">
+                        <div class="module-header">
+                            <span class="module-title">Transacciones Recientes</span>
+                        </div>
+                        <div id="recent-transactions" class="transaction-list">
+                            <!-- JS populated -->
+                            <p class="text-muted" style="text-align: center; padding: 2rem;">No hay transacciones aún.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: TRANSACCIONES -->
+            <section id="transactions-section" class="tab-content" style="display: none;">
+                <div class="module-card glass">
+                    <div class="module-header">
+                        <span class="module-title">Historial Completo</span>
+                    </div>
+                    <div id="full-transaction-list" class="transaction-list">
+                        <!-- JS populated -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: GASTO DIARIO -->
+            <section id="daily-section" class="tab-content" style="display: none;">
+                <div class="grid-2">
+                    <div class="module-card glass">
+                        <div class="module-header">
+                            <span class="module-title">Registrar Gasto del Día</span>
+                        </div>
+                        <form id="daily-expense-form">
+                            <div class="form-group">
+                                <label>Descripción del gasto</label>
+                                <input type="text" id="daily-desc" placeholder="Ej: Café, Almuerzo, Uber..." required>
+                            </div>
+                            <div class="form-group">
+                                <label>Monto</label>
+                                <input type="number" id="daily-amount" placeholder="0.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <i data-lucide="check"></i> Guardar Gasto
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="module-card glass" id="daily-summary">
+                        <div class="module-header">
+                            <span class="module-title">Gastos de Hoy</span>
+                            <span id="daily-total" class="amount expense">$0.00</span>
+                        </div>
+                        <div id="daily-list" class="transaction-list">
+                            <!-- JS populated -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: AHORRO -->
+            <section id="savings-section" class="tab-content" style="display: none;">
+                <div class="grid-2">
+                    <div class="module-card glass">
+                        <div class="module-header">
+                            <span class="module-title">Nueva Meta de Ahorro</span>
+                        </div>
+                        <form id="savings-form">
+                            <div class="form-group">
+                                <label>Nombre del Objetivo</label>
+                                <input type="text" id="saving-name" placeholder="Ej: Viaje a Japón, Auto Nuevo..." required>
+                            </div>
+                            <div class="form-group">
+                                <label>Monto Objetivo</label>
+                                <input type="number" id="saving-target" placeholder="0.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                <i data-lucide="trending-up"></i> Crear Plan
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="module-card glass" id="savings-list-container">
+                        <div class="module-header">
+                            <span class="module-title">Tus Metas</span>
+                        </div>
+                        <div id="savings-list">
+                            <!-- JS populated -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECCIÓN: CONFIGURACIÓN -->
+            <section id="settings-section" class="tab-content" style="display: none;">
+                <div class="module-card glass">
+                    <div class="module-header">
+                        <span class="module-title">Persistencia de Datos (GitHub)</span>
+                    </div>
+                    <p class="text-muted" style="margin-bottom: 1.5rem;">
+                        Exporta tus datos a un archivo JSON para guardarlo en tu repositorio de GitHub. 
+                        Luego, puedes importarlo desde cualquier otro dispositivo.
+                    </p>
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="exportData()">
+                            <i data-lucide="download"></i> Exportar Datos
+                        </button>
+                        <button class="btn btn-primary" style="background: var(--secondary);" onclick="document.getElementById('import-file').click()">
+                            <i data-lucide="upload"></i> Importar Datos
+                        </button>
+                        <input type="file" id="import-file" style="display: none;" onchange="importData(event)">
+                    </div>
+                    
+                    <hr style="margin: 2rem 0; border: 0; border-top: 1px solid var(--border);">
+                    
+                    <button class="btn" style="background: var(--danger); color: white;" onclick="clearAllData()">
+                        <i data-lucide="trash-2"></i> Borrar Todo
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal: Nueva Transacción General -->
+    <div id="tx-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass">
+            <div class="module-header">
+                <span class="module-title">Nueva Transacción</span>
+                <i data-lucide="x" style="cursor: pointer;" onclick="closeModal('tx-modal')"></i>
+            </div>
+            <form id="main-tx-form">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="tx-type">
+                        <option value="income">Ingreso</option>
+                        <option value="expense">Gasto</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="tx-category">
+                        <option value="salary">Salario</option>
+                        <option value="food">Comida</option>
+                        <option value="transport">Transporte</option>
+                        <option value="housing">Vivienda</option>
+                        <option value="entertainment">Entretenimiento</option>
+                        <option value="health">Salud</option>
+                        <option value="other">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <input type="text" id="tx-desc" placeholder="..." required>
+                </div>
+                <div class="form-group">
+                    <label>Monto</label>
+                    <input type="number" id="tx-amount" placeholder="0.00" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Inline Styles for Modal (to avoid bloating style.css for one component) -->
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            width: 100%;
+            max-width: 450px;
+            padding: 2rem;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .progress-bar-container {
+            background: rgba(255, 255, 255, 0.05);
+            height: 8px;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.5s ease;
+        }
+        .saving-card {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .saving-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+    </style>
+
+    <!-- Main Logic -->
+    <script src="main.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
