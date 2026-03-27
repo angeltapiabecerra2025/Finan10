@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceFlow | Gestión de Finanzas Personales</title>
-    <meta name="description" content="Tu aplicación premium para control de gastos, ingresos y planes de ahorro.">
+    <title>FinanceFlow | Gestión de Finanzas</title>
     
     <!-- Google Fonts: Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,8 +21,8 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar glass">
+        <!-- Sidebar (Desktop) -->
+        <aside class="sidebar">
             <div class="logo">
                 <i data-lucide="wallet"></i>
                 <span>FinanceFlow</span>
@@ -31,373 +30,256 @@
             
             <nav class="nav-links">
                 <div class="nav-item">
-                    <a href="#" class="nav-link active" onclick="switchTab('dashboard')">
+                    <a href="javascript:void(0)" class="nav-link active" onclick="switchTab('dashboard')">
                         <i data-lucide="layout-dashboard"></i> Dashboard
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#" class="nav-link" onclick="switchTab('transactions')">
-                        <i data-lucide="arrow-up-right"></i> Transacciones
+                    <a href="javascript:void(0)" class="nav-link" onclick="switchTab('transactions')">
+                        <i data-lucide="arrow-right-left"></i> Transacciones
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#" class="nav-link" onclick="switchTab('daily')">
+                    <a href="javascript:void(0)" class="nav-link" onclick="switchTab('daily')">
                         <i data-lucide="zap"></i> Gasto Diario
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="#" class="nav-link" onclick="switchTab('savings')">
-                        <i data-lucide="piggy-bank"></i> Ahorro
+                    <a href="javascript:void(0)" class="nav-link" onclick="switchTab('savings')">
+                        <i data-lucide="piggy-bank"></i> Plan de Ahorro
                     </a>
                 </div>
-            </nav>
-            
-            <div class="nav-item">
-                <a href="#" class="nav-link" onclick="switchTab('settings')">
-                    <i data-lucide="settings"></i> Configuración
-                </a>
-            </div>
-        </aside>
-
-        <!-- Barra de Navegación Móvil (GitHub Style) -->
-        <aside id="mobile-drawer" class="mobile-only github-drawer">
-            <div class="drawer-header-gh">
-                <div class="drawer-branding">
-                    <i data-lucide="github" style="color: white; background: #1f2328; padding: 4px; border-radius: 50%;"></i>
-                    <div style="display: flex; flex-direction: column;">
-                        <span class="gh-username">angel...2025</span>
-                        <span class="gh-repo">Finan10</span>
-                    </div>
-                </div>
-                <button class="btn-icon" onclick="toggleDrawer()">
-                    <i data-lucide="x" style="color: #656d76;"></i>
-                </button>
-            </div>
-            
-            <div class="drawer-sections">
-                <div class="drawer-section">
-                    <a href="javascript:void(0)" class="drawer-link-gh active" onclick="switchTab('dashboard')">
-                        <i data-lucide="home"></i> Home
-                    </a>
-                    <a href="javascript:void(0)" class="drawer-link-gh" onclick="switchTab('transactions')">
-                        <i data-lucide="list"></i> Transacciones
-                    </a>
-                    <a href="javascript:void(0)" class="drawer-link-gh" onclick="switchTab('daily')">
-                        <i data-lucide="zap"></i> Gasto Diario
-                    </a>
-                    <a href="javascript:void(0)" class="drawer-link-gh" onclick="switchTab('savings')">
-                        <i data-lucide="piggy-bank"></i> Ahorro
-                    </a>
-                </div>
-                
-                <div class="drawer-divider"></div>
-                
-                <div class="drawer-section">
-                    <a href="javascript:void(0)" class="drawer-link-gh" onclick="switchTab('settings')">
+                <div class="nav-item">
+                    <a href="javascript:void(0)" class="nav-link" onclick="switchTab('settings')">
                         <i data-lucide="settings"></i> Configuración
                     </a>
                 </div>
-            </div>
+            </nav>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
-            <!-- Header Section -->
+            <!-- Header -->
             <header class="header">
-                <div style="display: flex; align-items: center; gap: 0.75rem;">
-                    <button id="menu-toggle" class="mobile-only btn-icon-gh" onclick="toggleDrawer()">
-                        <i data-lucide="menu" style="color: #94a3b8;"></i>
-                    </button>
-                    <div>
-                        <h1 id="page-title">Dashboard</h1>
-                        <p class="text-muted" id="page-subtitle">Periodo: Actual</p>
-                    </div>
+                <div>
+                    <h1 id="page-title">Dashboard</h1>
+                    <p class="text-muted" id="page-subtitle">Periodo: Actual</p>
                 </div>
-                
-                <div style="display: flex; gap: 0.75rem; align-items: center;">
-                    <button id="privacy-toggle" class="btn-icon-gh" onclick="togglePrivacy()" title="Ocultar montos">
-                        <i data-lucide="eye" id="privacy-icon"></i>
-                    </button>
-                    <button class="btn btn-primary btn-sm" onclick="openModal('tx-modal')">
-                        <i data-lucide="plus"></i> <span class="desktop-only">Nueva</span>
-                    </button>
-                </div>
+                <button class="btn btn-primary" onclick="openModal('tx-modal')">
+                    <i data-lucide="plus"></i> <span>Nueva Transacción</span>
+                </button>
             </header>
 
             <!-- SECCIÓN: DASHBOARD -->
             <section id="dashboard-section" class="tab-content">
-                <!-- Filtros de Fecha -->
-                <div class="filters-card glass" style="margin-bottom: 2rem; padding: 1.5rem;">
-                    <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end;">
-                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
-                            <label>Desde:</label>
+                <!-- Filtros -->
+                <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Desde</label>
                             <input type="date" id="filter-start">
                         </div>
-                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
-                            <label>Hasta:</label>
+                        <div style="flex: 1; min-width: 140px;">
+                            <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Hasta</label>
                             <input type="date" id="filter-end">
                         </div>
-                        <button class="btn btn-primary" onclick="updateUI()">
-                            <i data-lucide="filter"></i> Filtrar Periodo
+                        <button class="btn btn-primary" onclick="updateUI()" style="height: 42px;">
+                            <i data-lucide="filter"></i> Filtrar
                         </button>
                     </div>
                 </div>
 
-                <div class="balance-card glass">
-                    <div class="stat-item">
-                        <h3>Balance Total</h3>
-                        <div class="amount" id="total-balance">$0.00</div>
+                <div class="balance-grid">
+                    <!-- Balance Total -->
+                    <div class="card stat-card">
+                        <div class="stat-label">
+                            <span>Balance Total</span>
+                            <button class="btn-icon-sm" onclick="togglePrivacy('balance')" title="Ocultar Balance">
+                                <i data-lucide="eye" id="eye-balance"></i>
+                            </button>
+                        </div>
+                        <div class="amount-container">
+                            <span class="amount" id="total-balance">$0.00</span>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <h3>Ingresos del Mes</h3>
-                        <div class="amount income" id="month-income">$0.00</div>
+                    <!-- Ingresos del Mes -->
+                    <div class="card stat-card">
+                        <div class="stat-label">
+                            <span>Ingresos del Mes</span>
+                            <button class="btn-icon-sm" onclick="togglePrivacy('income')" title="Ocultar Salario">
+                                <i data-lucide="eye" id="eye-income"></i>
+                            </button>
+                        </div>
+                        <div class="amount-container">
+                            <span class="amount income" id="month-income">$0.00</span>
+                        </div>
                     </div>
-                    <div class="stat-item">
-                        <h3>Gastos del Mes</h3>
-                        <div class="amount expense" id="month-expense">$0.00</div>
+                    <!-- Gastos del Mes -->
+                    <div class="card stat-card">
+                        <div class="stat-label">Gastos del Mes</div>
+                        <div class="amount-container">
+                            <span class="amount expense" id="month-expense">$0.00</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid-2">
-                    <div class="module-card glass">
-                        <div class="module-header">
-                            <span class="module-title">Gastos por Categoría</span>
-                        </div>
+                <div class="grid-2" style="margin-top: 1.5rem;">
+                    <div class="card">
+                        <div class="stat-label" style="margin-bottom: 1rem;">Gastos p/ Categoría</div>
                         <div class="chart-container">
                             <canvas id="expenseChart"></canvas>
                         </div>
                     </div>
-
-                    <div class="module-card glass">
-                        <div class="module-header">
-                            <span class="module-title">Comparativa de Periodos</span>
-                        </div>
+                    <div class="card">
+                        <div class="stat-label" style="margin-bottom: 1rem;">Comparativa Periodos</div>
                         <div class="chart-container">
                             <canvas id="periodComparisonChart"></canvas>
                         </div>
                     </div>
                 </div>
 
-                <div class="module-card glass" style="margin-top: 2rem;">
-                    <div class="module-header">
-                        <span class="module-title">Transacciones Recientes</span>
-                    </div>
+                <div class="card" style="margin-top: 1.5rem;">
+                    <div class="stat-label" style="margin-bottom: 1rem;">Transacciones Recientes</div>
                     <div id="recent-transactions" class="transaction-list">
                         <!-- JS populated -->
                     </div>
                 </div>
             </section>
 
-            <!-- SECCIÓN: TRANSACCIONES -->
+            <!-- Otras secciones (Transacciones, Diario, Ahorro, Config) -->
             <section id="transactions-section" class="tab-content" style="display: none;">
-                <div class="module-card glass">
-                    <div class="module-header">
-                        <span class="module-title">Historial Completo</span>
-                    </div>
-                    <div id="full-transaction-list" class="transaction-list">
-                        <!-- JS populated -->
-                    </div>
+                <div class="card shadow-md">
+                    <div class="stat-label" style="margin-bottom: 1rem;">Todo el Historial</div>
+                    <div id="full-transaction-list" class="transaction-list"></div>
                 </div>
             </section>
 
-            <!-- SECCIÓN: GASTO DIARIO -->
             <section id="daily-section" class="tab-content" style="display: none;">
                 <div class="grid-2">
-                    <div class="module-card glass">
-                        <div class="module-header">
-                            <span class="module-title">Registrar Gasto del Día</span>
-                        </div>
+                    <div class="card">
+                        <div class="stat-label" style="margin-bottom: 1.25rem;">Registrar Gasto de Hoy</div>
                         <form id="daily-expense-form">
-                            <div class="form-group">
-                                <label>Descripción del gasto</label>
-                                <input type="text" id="daily-desc" placeholder="Ej: Café, Almuerzo, Uber..." required>
+                            <div style="margin-bottom: 1rem;">
+                                <label>Gasto</label>
+                                <input type="text" id="daily-desc" placeholder="Ej: Comida..." required>
                             </div>
-                            <div class="form-group">
+                            <div style="margin-bottom: 1rem;">
                                 <label>Monto</label>
                                 <input type="number" id="daily-amount" placeholder="0.00" required>
                             </div>
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                <i data-lucide="check"></i> Guardar Gasto
-                            </button>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Registrar</button>
                         </form>
                     </div>
-                    
-                    <div class="module-card glass" id="daily-summary">
-                        <div class="module-header">
-                            <span class="module-title">Gastos de Hoy</span>
-                            <span id="daily-total" class="amount expense">$0.00</span>
+                    <div class="card">
+                        <div class="header">
+                            <span class="stat-label">Gastos de Hoy</span>
+                            <span class="amount expense" id="daily-total" style="font-size: 1.25rem;">$0</span>
                         </div>
-                        <div id="daily-list" class="transaction-list">
-                            <!-- JS populated -->
-                        </div>
+                        <div id="daily-list" class="transaction-list"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- SECCIÓN: AHORRO -->
             <section id="savings-section" class="tab-content" style="display: none;">
                 <div class="grid-2">
-                    <div class="module-card glass">
-                        <div class="module-header">
-                            <span class="module-title">Nueva Meta de Ahorro</span>
-                        </div>
+                    <div class="card">
+                        <div class="stat-label" style="margin-bottom: 1.25rem;">Nueva Meta</div>
                         <form id="savings-form">
-                            <div class="form-group">
-                                <label>Nombre del Objetivo</label>
-                                <input type="text" id="saving-name" placeholder="Ej: Viaje a Japón, Auto Nuevo..." required>
+                            <div style="margin-bottom: 1rem;">
+                                <label>Objetivo</label>
+                                <input type="text" id="saving-name" placeholder="Ej: Viaje..." required>
                             </div>
-                            <div class="form-group">
-                                <label>Monto Objetivo</label>
+                            <div style="margin-bottom: 1rem;">
+                                <label>Monto</label>
                                 <input type="number" id="saving-target" placeholder="0.00" required>
                             </div>
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                <i data-lucide="trending-up"></i> Crear Plan
-                            </button>
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">Crear Meta</button>
                         </form>
                     </div>
-                    
-                    <div class="module-card glass" id="savings-list-container">
-                        <div class="module-header">
-                            <span class="module-title">Tus Metas</span>
-                        </div>
-                        <div id="savings-list">
-                            <!-- JS populated -->
-                        </div>
+                    <div class="card">
+                        <div class="stat-label" style="margin-bottom: 1.25rem;">Metas en Curso</div>
+                        <div id="savings-list"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- SECCIÓN: CONFIGURACIÓN -->
             <section id="settings-section" class="tab-content" style="display: none;">
-                <div class="module-card glass">
-                    <div class="module-header">
-                        <span class="module-title">Persistencia de Datos (GitHub)</span>
-                    </div>
-                    <p class="text-muted" style="margin-bottom: 1.5rem;">
-                        Exporta tus datos a un archivo JSON para guardarlo en tu repositorio de GitHub. 
-                        Luego, puedes importarlo desde cualquier otro dispositivo.
-                    </p>
-                    <div style="display: flex; gap: 1rem;">
-                        <button class="btn btn-primary" onclick="exportData()">
-                            <i data-lucide="download"></i> Exportar Datos
-                        </button>
-                        <button class="btn btn-primary" style="background: var(--secondary);" onclick="document.getElementById('import-file').click()">
-                            <i data-lucide="upload"></i> Importar Datos
-                        </button>
+                <div class="card">
+                    <div class="stat-label" style="margin-bottom: 1.25rem;">Gestión de Datos</div>
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="exportData()">Exportar JSON</button>
+                        <button class="btn" onclick="document.getElementById('import-file').click()">Importar JSON</button>
                         <input type="file" id="import-file" style="display: none;" onchange="importData(event)">
+                        <button class="btn" style="background: var(--danger); color: white;" onclick="clearAllData()">Borrar Todo</button>
                     </div>
-                    
-                    <hr style="margin: 2rem 0; border: 0; border-top: 1px solid var(--border);">
-                    
-                    <button class="btn" style="background: var(--danger); color: white;" onclick="clearAllData()">
-                        <i data-lucide="trash-2"></i> Borrar Todo
-                    </button>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Modal: Nueva Transacción General -->
-    <div id="tx-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content glass">
-            <div class="module-header">
-                <span class="module-title">Nueva Transacción</span>
+    <!-- Barra de Navegación Inferior (Móvil) -->
+    <nav class="bottom-nav">
+        <a href="javascript:void(0)" class="bottom-link active" onclick="switchTab('dashboard')">
+            <i data-lucide="layout-dashboard"></i><span>Inicio</span>
+        </a>
+        <a href="javascript:void(0)" class="bottom-link" onclick="switchTab('transactions')">
+            <i data-lucide="arrow-right-left"></i><span>Historial</span>
+        </a>
+        <a href="javascript:void(0)" class="bottom-link" onclick="switchTab('daily')">
+            <i data-lucide="zap"></i><span>Día</span>
+        </a>
+        <a href="javascript:void(0)" class="bottom-link" onclick="switchTab('savings')">
+            <i data-lucide="piggy-bank"></i><span>Ahorro</span>
+        </a>
+        <a href="javascript:void(0)" class="bottom-link" onclick="switchTab('settings')">
+            <i data-lucide="settings"></i><span>Conf.</span>
+        </a>
+    </nav>
+
+    <!-- Modal Transacción -->
+    <div id="tx-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="header" style="margin-bottom: 1.5rem;">
+                <h3 style="font-weight: 700;">Nueva Transacción</h3>
                 <i data-lucide="x" style="cursor: pointer;" onclick="closeModal('tx-modal')"></i>
             </div>
             <form id="main-tx-form">
-                <div class="form-group">
+                <div style="margin-bottom: 1rem;">
                     <label>Tipo</label>
                     <select id="tx-type">
                         <option value="income">Ingreso</option>
                         <option value="expense">Gasto</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div style="margin-bottom: 1rem;">
                     <label>Categoría</label>
                     <select id="tx-category">
                         <option value="salary">Salario</option>
                         <option value="food">Comida</option>
                         <option value="transport">Transporte</option>
                         <option value="housing">Vivienda</option>
-                        <option value="entertainment">Entretenimiento</option>
                         <option value="health">Salud</option>
-                        <option value="other">Otro</option>
+                        <option value="other">Otros</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div style="margin-bottom: 1rem;">
                     <label>Descripción</label>
-                    <input type="text" id="tx-desc" placeholder="..." required>
+                    <input type="text" id="tx-desc" required>
                 </div>
-                <div class="form-group">
+                <div style="margin-bottom: 1rem;">
                     <label>Fecha</label>
                     <input type="date" id="tx-date">
                 </div>
-                <div class="form-group">
+                <div style="margin-bottom: 1.5rem;">
                     <label>Monto</label>
-                    <input type="number" id="tx-amount" placeholder="0.00" required>
+                    <input type="number" id="tx-amount" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar</button>
             </form>
         </div>
     </div>
 
-    <!-- Inline Styles for Modal (to avoid bloating style.css for one component) -->
-    <style>
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            width: 100%;
-            max-width: 450px;
-            padding: 2rem;
-            animation: slideUp 0.3s ease-out;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        .progress-bar-container {
-            background: rgba(255, 255, 255, 0.05);
-            height: 8px;
-            border-radius: 4px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
-        .progress-bar {
-            height: 100%;
-            background: var(--primary);
-            transition: width 0.5s ease;
-        }
-        .saving-card {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        .saving-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-    </style>
-
-    <!-- Overlay para el Drawer -->
-    <div id="drawer-overlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
-    
-    <!-- Main Logic -->
     <script src="main.js"></script>
-    <script>
-        // Initialize Lucide icons
-        lucide.createIcons();
-    </script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>

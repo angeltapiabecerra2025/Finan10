@@ -2,7 +2,8 @@
 let state = {
     transactions: [],
     savings: [],
-    privacyMode: false
+    privacyBalance: false,
+    privacyIncome: false
 };
 
 // --- Initialization ---
@@ -17,68 +18,71 @@ document.addEventListener('DOMContentLoaded', () => {
     
     document.getElementById('filter-start').value = firstDay;
     document.getElementById('filter-end').value = lastDay;
-    document.getElementById('tx-date').value = now.toISOString().split('T')[0];
+    const txDateInput = document.getElementById('tx-date');
+    if (txDateInput) txDateInput.value = now.toISOString().split('T')[0];
 
     updateUI();
     initCharts();
     
     // Form Listeners
-    document.getElementById('main-tx-form').addEventListener('submit', handleNewTransaction);
-    document.getElementById('daily-expense-form').addEventListener('submit', handleDailyExpense);
-    document.getElementById('savings-form').addEventListener('submit', handleNewSaving);
+    document.getElementById('main-tx-form')?.addEventListener('submit', handleNewTransaction);
+    document.getElementById('daily-expense-form')?.addEventListener('submit', handleDailyExpense);
+    document.getElementById('savings-form')?.addEventListener('submit', handleNewSaving);
 });
 
 // --- State persistence ---
 
 function saveState() {
-    localStorage.setItem('finance_app_state', JSON.stringify(state));
+    localStorage.setItem('finance_app_state_light', JSON.stringify(state));
     updateUI();
     updateCharts();
 }
 
 function loadState() {
-    const saved = localStorage.getItem('finance_app_state');
+    const saved = localStorage.getItem('finance_app_state_light');
     if (saved) {
         state = JSON.parse(saved);
-        if (state.privacyMode === undefined) state.privacyMode = false;
+        if (state.privacyBalance === undefined) state.privacyBalance = false;
+        if (state.privacyIncome === undefined) state.privacyIncome = false;
     }
 }
 
-// --- Privacy Toggle ---
-
-function togglePrivacy() {
-    state.privacyMode = !state.privacyMode;
-    const icon = document.getElementById('privacy-icon');
-    if (window.lucide) {
-        icon.setAttribute('data-lucide', state.privacyMode ? 'eye-off' : 'eye');
-        lucide.createIcons();
+function clearAllData() {
+    if (confirm('¿Borrar todos los datos? No se puede deshacer.')) {
+        state = { transactions: [], savings: [], privacyBalance: false, privacyIncome: false };
+        saveState();
+        location.reload();
     }
+}
+
+// --- Privacy Toggles ---
+
+function togglePrivacy(type) {
+    if (type === 'balance') {
+        state.privacyBalance = !state.privacyBalance;
+        const icon = document.getElementById('eye-balance');
+        icon?.setAttribute('data-lucide', state.privacyBalance ? 'eye-off' : 'eye');
+    } else if (type === 'income') {
+        state.privacyIncome = !state.privacyIncome;
+        const icon = document.getElementById('eye-income');
+        icon?.setAttribute('data-lucide', state.privacyIncome ? 'eye-off' : 'eye');
+    }
+    
+    if (window.lucide) lucide.createIcons();
     saveState();
 }
 
-// --- UI Navigation & Drawer ---
-
-function toggleDrawer() {
-    const drawer = document.getElementById('mobile-drawer');
-    const overlay = document.getElementById('drawer-overlay');
-    
-    if (drawer.classList.contains('open')) {
-        drawer.classList.remove('open');
-        overlay.classList.remove('active');
-    } else {
-        drawer.classList.add('open');
-        overlay.classList.add('active');
-    }
+function formatValue(val, sensitiveType) {
+    if (sensitiveType === 'balance' && state.privacyBalance) return '****';
+    if (sensitiveType === 'income' && state.privacyIncome) return '****';
+    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(val);
 }
 
-function closeDrawer() {
-    document.getElementById('mobile-drawer').classList.remove('open');
-    document.getElementById('drawer-overlay').classList.remove('active');
-}
+// --- Navigation ---
 
 function switchTab(tabId) {
-    // Update active links
-    const links = [...document.querySelectorAll('.nav-link'), ...document.querySelectorAll('.drawer-link-gh')];
+    // Update active links (Desktop & Mobile Bottom Nav)
+    const links = [...document.querySelectorAll('.nav-link'), ...document.querySelectorAll('.bottom-link')];
     
     links.forEach(link => {
         link.classList.remove('active');
@@ -92,21 +96,33 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(section => {
         section.style.display = 'none';
     });
-    document.getElementById(`${tabId}-section`).style.display = 'block';
+    const targetSection = document.getElementById(`${tabId}-section`);
+    if (targetSection) targetSection.style.display = 'block';
+
+    const titles = {
+        'dashboard': { title: 'Dashboard', sub: 'Resumen financiero por periodo.' },
+        'transactions': { title: 'Transacciones', sub: 'Historial completo de movimientos.' },
+        'daily': { title: 'Gasto Diario', sub: 'Registro rápido del día.' },
+        'savings': { title: 'Plan de Ahorro', sub: 'Metas y objetivos de ahorro.' },
+        'settings': { title: 'Configuración', sub: 'Copia de seguridad y datos.' }
+    };
+    
+    document.getElementById('page-title').innerText = titles[tabId].title;
+    document.getElementById('page-subtitle').innerText = titles[tabId].sub;
 
     if (tabId === 'dashboard') updateCharts();
-    
-    closeDrawer();
 }
 
 // --- Modals ---
 
 function openModal(id) {
-    document.getElementById(id).style.display = 'flex';
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'none';
 }
 
 // --- Logic: Transactions ---
@@ -173,7 +189,8 @@ function handleNewSaving(e) {
 }
 
 function addContribution(id) {
-    const amount = parseFloat(prompt('¿Cuánto quieres añadir a este ahorro?'));
+    const amountStr = prompt('¿Cuánto quieres añadir a este ahorro?');
+    const amount = parseFloat(amountStr);
     if (isNaN(amount) || amount <= 0) return;
     
     const saving = state.savings.find(s => s.id === id);
@@ -183,7 +200,7 @@ function addContribution(id) {
             id: Date.now(),
             type: 'expense',
             category: 'other',
-            description: `Ahorro: ${saving.name}`,
+            description: `Depósito Ahorro: ${saving.name}`,
             amount: amount,
             date: new Date().toISOString().split('T')[0]
         });
@@ -199,15 +216,13 @@ function getFilteredTransactions(customStart, customEnd) {
     
     if (!start || !end) return state.transactions;
     
-    return state.transactions.filter(tx => {
-        return tx.date >= start && tx.date <= end;
-    });
+    return state.transactions.filter(tx => tx.date >= start && tx.date <= end);
 }
 
 function updateUI() {
     const filtered = getFilteredTransactions();
     
-    const totalBalance = state.transactions.reduce((acc, tx) => 
+    const totalBalanceVal = state.transactions.reduce((acc, tx) => 
         tx.type === 'income' ? acc + tx.amount : acc - tx.amount, 0);
     
     const periodIncome = filtered
@@ -219,15 +234,15 @@ function updateUI() {
         .reduce((acc, tx) => acc + tx.amount, 0);
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const dailyTotal = state.transactions
+    const dailyTotalVal = state.transactions
         .filter(tx => tx.type === 'expense' && tx.date === todayStr)
         .reduce((acc, tx) => acc + tx.amount, 0);
 
-    // Update Dashboard Cards
-    document.getElementById('total-balance').innerText = formatCurrency(totalBalance);
-    document.getElementById('month-income').innerText = formatCurrency(periodIncome);
-    document.getElementById('month-expense').innerText = formatCurrency(periodExpense);
-    document.getElementById('daily-total').innerText = formatCurrency(dailyTotal);
+    // Update Cards with sensitive check
+    document.getElementById('total-balance').innerText = formatValue(totalBalanceVal, 'balance');
+    document.getElementById('month-income').innerText = formatValue(periodIncome, 'income');
+    document.getElementById('month-expense').innerText = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(periodExpense);
+    document.getElementById('daily-total').innerText = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(dailyTotalVal);
 
     renderTransactionLists(filtered);
     renderDailyList(todayStr);
@@ -246,146 +261,134 @@ function renderTransactionLists(filtered) {
         <div class="transaction-item">
             <div class="tx-info">
                 <div class="tx-icon">
-                    <i data-lucide="${tx.type === 'income' ? 'arrow-down-left' : 'arrow-up-right'}" style="color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}"></i>
+                    <i data-lucide="${tx.type === 'income' ? 'trending-up' : 'trending-down'}" style="color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}"></i>
                 </div>
                 <div class="tx-details">
-                    <span class="name" style="color: white; font-weight: 500;">${tx.description}</span>
-                    <span class="date" style="font-size: 0.75rem; color: #94a3b8;">${tx.date} • ${tx.category}</span>
+                    <span class="name">${tx.description}</span>
+                    <span class="date">${tx.date} • ${tx.category}</span>
                 </div>
             </div>
-            <div class="amount" style="font-weight: 600; color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}">
-                ${tx.type === 'income' ? '+' : '-'}${formatCurrency(tx.amount)}
+            <div class="amount" style="font-weight: 700; color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}">
+                ${tx.type === 'income' ? '+' : '-'}${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(tx.amount)}
             </div>
         </div>
     `;
 
-    recentList.innerHTML = sorted.slice(0, 5).map(createItemHTML).join('') || '<p class="text-muted" style="text-align:center; padding: 2rem;">No hay transacciones en este periodo.</p>';
-    fullList.innerHTML = sorted.map(createItemHTML).join('') || '<p class="text-muted" style="text-align:center; padding: 2rem;">No hay transacciones.</p>';
+    if (recentList) recentList.innerHTML = sorted.slice(0, 5).map(createItemHTML).join('') || '<p style="text-align:center; color:#94a3b8; padding:1.5rem;">Sin movimientos.</p>';
+    if (fullList) fullList.innerHTML = sorted.map(createItemHTML).join('') || '<p style="text-align:center; color:#94a3b8; padding:1.5rem;">Sin movimientos.</p>';
 }
 
 function renderDailyList(todayStr) {
     const list = document.getElementById('daily-list');
     const todayTx = state.transactions.filter(tx => tx.type === 'expense' && tx.date === todayStr);
     
-    list.innerHTML = todayTx.map(tx => `
+    if (list) list.innerHTML = todayTx.map(tx => `
         <div class="transaction-item">
-            <span class="name" style="color: white;">${tx.description}</span>
-            <span class="amount expense" style="font-weight: 600;">${formatCurrency(tx.amount)}</span>
+            <span class="name">${tx.description}</span>
+            <span class="amount expense" style="font-weight: 700;">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(tx.amount)}</span>
         </div>
-    `).join('') || '<p class="text-muted" style="text-align:center;">Sin gastos hoy.</p>';
+    `).join('') || '<p style="text-align:center; color:#94a3b8; padding:1.5rem;">Libre de gastos hoy.</p>';
 }
 
 function renderSavings() {
     const list = document.getElementById('savings-list');
-    list.innerHTML = state.savings.map(s => {
+    if (list) list.innerHTML = state.savings.map(s => {
         const progress = Math.min((s.current / s.target) * 100, 100);
         return `
-            <div class="saving-card">
-                <div class="saving-info">
-                    <strong style="color: white;">${s.name}</strong>
-                    <span style="color: #94a3b8;">${formatCurrency(s.current)} / ${formatCurrency(s.target)}</span>
+            <div style="margin-bottom: 1.25rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.875rem;">
+                    <strong style="color:var(--text-main);">${s.name}</strong>
+                    <span style="color:var(--text-muted);">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(s.current)} / ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(s.target)}</span>
                 </div>
-                <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: ${progress}%"></div>
+                <div style="background:#f3f4f6; height:8px; border-radius:4px; overflow:hidden; margin-bottom:0.75rem;">
+                    <div style="background:var(--primary); height:100%; width:${progress}%; transition: width 0.3s ease;"></div>
                 </div>
-                <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="addContribution(${s.id})">
-                    <i data-lucide="plus"></i> Ahorrar
-                </button>
+                <button class="btn btn-primary" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;" onclick="addContribution(${s.id})">Añadir Fondos</button>
             </div>
         `;
-    }).join('') || '<p class="text-muted" style="text-align:center; padding: 1rem;">No tienes metas de ahorro.</p>';
+    }).join('') || '<p style="text-align:center; color:#94a3b8; padding:1rem;">Crea tu primera meta.</p>';
 }
 
-// --- Utils ---
-
-function formatCurrency(val) {
-    if (state.privacyMode) return '****';
-    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(val);
-}
-
-// --- Chart.js Integration ---
+// --- Charts ---
 
 let expenseChart;
 let barChart;
 
 function initCharts() {
-    // Doughnut Chart
-    const ctxPie = document.getElementById('expenseChart').getContext('2d');
-    expenseChart = new Chart(ctxPie, {
-        type: 'doughnut',
-        data: { labels: [], datasets: [{ data: [], backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#94a3b8'], borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ffffff' } } }, cutout: '70%' }
-    });
+    const pieCanvas = document.getElementById('expenseChart');
+    if (pieCanvas) {
+        expenseChart = new Chart(pieCanvas.getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#94a3b8'], borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#475569', font: { family: 'Outfit' } } } }, cutout: '75%' }
+        });
+    }
 
-    // Bar Chart
-    const ctxBar = document.getElementById('periodComparisonChart').getContext('2d');
-    barChart = new Chart(ctxBar, {
-        type: 'bar',
-        data: {
-            labels: ['Ingresos', 'Gastos'],
-            datasets: [
-                { label: 'Periodo Anterior', data: [0, 0], backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 4 },
-                { label: 'Periodo Actual', data: [0, 0], backgroundColor: '#10b981', borderRadius: 4 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                x: { ticks: { color: '#94a3b8' } }
+    const barCanvas = document.getElementById('periodComparisonChart');
+    if (barCanvas) {
+        barChart = new Chart(barCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['Ingresos', 'Gastos'],
+                datasets: [
+                    { label: 'Periodo Anterior', data: [0, 0], backgroundColor: '#e2e8f0', borderRadius: 6 },
+                    { label: 'Periodo Actual', data: [0, 0], backgroundColor: '#10b981', borderRadius: 6 }
+                ]
             },
-            plugins: { legend: { labels: { color: '#ffffff' } } }
-        }
-    });
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#475569' } },
+                    x: { ticks: { color: '#475569' } }
+                },
+                plugins: { legend: { labels: { color: '#475569', font: { family: 'Outfit' } } } }
+            }
+        });
+    }
     
     updateCharts();
 }
 
 function updateCharts() {
-    if (!expenseChart || !barChart) return;
-    
     const currentData = getFilteredTransactions();
     
-    // Doughnut Update
-    const categories = {};
-    currentData.filter(tx => tx.type === 'expense').forEach(tx => {
-        categories[tx.category] = (categories[tx.category] || 0) + tx.amount;
-    });
-    expenseChart.data.labels = Object.keys(categories);
-    expenseChart.data.datasets[0].data = Object.values(categories);
-    expenseChart.update();
+    if (expenseChart) {
+        const categories = {};
+        currentData.filter(tx => tx.type === 'expense').forEach(tx => {
+            categories[tx.category] = (categories[tx.category] || 0) + tx.amount;
+        });
+        expenseChart.data.labels = Object.keys(categories);
+        expenseChart.data.datasets[0].data = Object.values(categories);
+        expenseChart.update();
+    }
 
-    // Bar Chart Update (Comparative)
-    const start = new Date(document.getElementById('filter-start').value);
-    const end = new Date(document.getElementById('filter-end').value);
-    const diff = end - start;
-    
-    const prevEnd = new Date(start);
-    prevEnd.setDate(prevEnd.getDate() - 1);
-    const prevStart = new Date(prevEnd);
-    prevStart.setTime(prevStart.getTime() - diff);
+    if (barChart) {
+        const start = new Date(document.getElementById('filter-start').value);
+        const end = new Date(document.getElementById('filter-end').value);
+        const diff = end - start;
+        const prevEnd = new Date(start);
+        prevEnd.setDate(prevEnd.getDate() - 1);
+        const prevStart = new Date(prevEnd);
+        prevStart.setTime(prevStart.getTime() - diff);
 
-    const prevData = getFilteredTransactions(
-        prevStart.toISOString().split('T')[0],
-        prevEnd.toISOString().split('T')[0]
-    );
+        const prevData = getFilteredTransactions(
+            prevStart.toISOString().split('T')[0],
+            prevEnd.toISOString().split('T')[0]
+        );
 
-    const calc = (data) => {
-        const inc = data.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0);
-        const exp = data.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
-        return [inc, exp];
-    };
+        const incC = currentData.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0);
+        const expC = currentData.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
+        const incP = prevData.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0);
+        const expP = prevData.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
 
-    const currentTotals = calc(currentData);
-    const prevTotals = calc(prevData);
-
-    barChart.data.datasets[0].data = prevTotals;
-    barChart.data.datasets[1].data = currentTotals;
-    barChart.update();
+        barChart.data.datasets[0].data = [incP, expP];
+        barChart.data.datasets[1].data = [incC, expC];
+        barChart.update();
+    }
 }
 
-// --- Backup ---
+// --- Data ---
 
 function exportData() {
     const dataStr = JSON.stringify(state, null, 2);
@@ -406,7 +409,7 @@ function importData(event) {
             state = JSON.parse(e.target.result);
             saveState();
             location.reload();
-        } catch (err) { alert('Error'); }
+        } catch (err) { alert('Error de importación'); }
     };
     reader.readAsText(file);
 }
