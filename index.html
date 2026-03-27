@@ -293,15 +293,10 @@
           <div class="divider"></div>
 
           <div class="settings-group">
-            <h3>👤 Perfiles</h3>
-            <p class="text-muted text-sm" style="margin-bottom:1rem;">Cambia de perfil o administra los usuarios de esta aplicación.</p>
-            <div class="btn-group">
-              <button class="btn btn-ghost" onclick="switchProfile()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5 4.5 4.5m0 0L16.5 12M21 7.5H7.5"/></svg>
-                Cambiar Perfil
-              </button>
-              <button class="btn btn-danger" onclick="deleteCurrentProfile()">Eliminar este Perfil</button>
-            </div>
+            <h3>🔐 Cuenta y Acceso</h3>
+            <p class="text-muted text-sm" style="margin-bottom:0.5rem;">Usuario: <strong id="settings-username">-</strong></p>
+            <p class="text-muted text-sm" style="margin-bottom:1rem;">Para cambiar tu PIN, usa la opción de restablecer abajo.</p>
+            <button class="btn btn-danger" onclick="resetUser()">Restablecer PIN / Cuenta</button>
           </div>
 
           <div class="divider"></div>
@@ -395,75 +390,67 @@
   </div>
 </div>
 
-<!-- ═══════════════════ PROFILE SCREEN ═══════════════════ -->
-<div id="profile-screen" class="profile-screen">
-  <div class="profile-logo-icon">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 0v20M2 12h20"/></svg>
-  </div>
-  <div class="profile-logo-name">Finance<span>-Ang</span></div>
-  <div class="profile-heading">¿Quién va a registrar las finanzas hoy?</div>
+<!-- ═══════════════════════ AUTH SCREEN ═══════════════════════ -->
+<div id="auth-screen" class="auth-screen">
+  <div class="auth-box">
 
-  <div class="profiles-grid" id="profiles-grid">
-    <!-- JS populated -->
-  </div>
-  <button class="profile-add-btn" onclick="openCreateProfile()">
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
-    Nuevo Perfil
-  </button>
-</div>
+    <!-- Logo -->
+    <div style="text-align:center; margin-bottom:2rem;">
+      <div class="profile-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 0v20M2 12h20"/></svg>
+      </div>
+      <div class="profile-logo-name" style="margin-top:0.75rem;">Finance<span>-Ang</span></div>
+    </div>
 
-<!-- ═══════════════════ PIN OVERLAY ═══════════════════ -->
-<div id="pin-overlay" class="pin-overlay">
-  <div class="pin-box">
-    <div class="pin-avatar" id="pin-avatar">A</div>
-    <div class="pin-name"  id="pin-name">Perfil</div>
-    <div class="pin-label">Ingresa tu PIN de 4 dígitos</div>
-    <div class="pin-dots">
-      <div class="pin-dot" id="dot-0"></div>
-      <div class="pin-dot" id="dot-1"></div>
-      <div class="pin-dot" id="dot-2"></div>
-      <div class="pin-dot" id="dot-3"></div>
+    <!-- PANEL: REGISTRO (primera vez) -->
+    <div id="register-panel">
+      <p style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-bottom:1.5rem;">Bienvenido. Configura tu cuenta para empezar.</p>
+      <div class="form-group">
+        <label>Tu Nombre</label>
+        <input type="text" id="reg-name" placeholder="Ej: Angel" maxlength="30" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>PIN (4 dígitos)</label>
+        <input type="password" id="reg-pin" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>Confirmar PIN</label>
+        <input type="password" id="reg-pin-confirm" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="new-password">
+      </div>
+      <p id="reg-error" class="auth-error"></p>
+      <button class="btn btn-primary" style="width:100%;" onclick="submitRegister()">Crear Cuenta</button>
     </div>
-    <div class="pin-error" id="pin-error"></div>
-    <div class="pin-pad">
-      <button class="pin-key" onclick="pinKey('1')">1</button>
-      <button class="pin-key" onclick="pinKey('2')">2</button>
-      <button class="pin-key" onclick="pinKey('3')">3</button>
-      <button class="pin-key" onclick="pinKey('4')">4</button>
-      <button class="pin-key" onclick="pinKey('5')">5</button>
-      <button class="pin-key" onclick="pinKey('6')">6</button>
-      <button class="pin-key" onclick="pinKey('7')">7</button>
-      <button class="pin-key" onclick="pinKey('8')">8</button>
-      <button class="pin-key" onclick="pinKey('9')">9</button>
-      <button class="pin-key" onclick="closePinOverlay()" style="font-size:0.8rem; color:var(--text-muted);">Cancelar</button>
-      <button class="pin-key" onclick="pinKey('0')">0</button>
-      <button class="pin-key" onclick="pinBackspace()" style="font-size:1rem;">⌫</button>
-    </div>
-  </div>
-</div>
 
-<!-- ═══════════════════ CREATE PROFILE ═══════════════════ -->
-<div id="create-profile-overlay" class="create-profile-overlay">
-  <div class="create-profile-box">
-    <div class="modal-header" style="margin-bottom:1.5rem;">
-      <h3>Nuevo Perfil</h3>
-      <button class="modal-close" onclick="closeCreateProfile()">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
+    <!-- PANEL: LOGIN (vuelve) -->
+    <div id="login-panel" style="display:none;">
+      <div style="text-align:center; margin-bottom:1.75rem;">
+        <div class="auth-avatar" id="login-initial">A</div>
+        <div class="auth-username" id="login-name">Usuario</div>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.35rem;">Ingresa tu PIN para continuar</p>
+      </div>
+      <div class="auth-dots">
+        <div class="pin-dot" id="auth-dot-0"></div>
+        <div class="pin-dot" id="auth-dot-1"></div>
+        <div class="pin-dot" id="auth-dot-2"></div>
+        <div class="pin-dot" id="auth-dot-3"></div>
+      </div>
+      <p class="auth-error" id="auth-pin-error"></p>
+      <div class="auth-pad">
+        <button class="pin-key" onclick="authPinKey('1')">1</button>
+        <button class="pin-key" onclick="authPinKey('2')">2</button>
+        <button class="pin-key" onclick="authPinKey('3')">3</button>
+        <button class="pin-key" onclick="authPinKey('4')">4</button>
+        <button class="pin-key" onclick="authPinKey('5')">5</button>
+        <button class="pin-key" onclick="authPinKey('6')">6</button>
+        <button class="pin-key" onclick="authPinKey('7')">7</button>
+        <button class="pin-key" onclick="authPinKey('8')">8</button>
+        <button class="pin-key" onclick="authPinKey('9')">9</button>
+        <button class="pin-key" style="font-size:0.75rem; color:var(--text-faint);" onclick="resetUser()">Restab.</button>
+        <button class="pin-key" onclick="authPinKey('0')">0</button>
+        <button class="pin-key" onclick="authPinBackspace()">⌫</button>
+      </div>
     </div>
-    <div class="form-group">
-      <label>Nombre</label>
-      <input type="text" id="new-profile-name" placeholder="Ej: Angel, María..." maxlength="20">
-    </div>
-    <div class="form-group">
-      <label>Color del Avatar</label>
-      <div class="color-swatches" id="color-swatches"></div>
-    </div>
-    <div class="form-group">
-      <label>PIN (opcional, 4 dígitos)</label>
-      <input type="password" id="new-profile-pin" placeholder="Dejar vacío para sin PIN" maxlength="4" inputmode="numeric">
-    </div>
-    <button class="btn btn-primary" style="width:100%; margin-top:0.5rem;" onclick="saveNewProfile()">Crear Perfil</button>
+
   </div>
 </div>
 

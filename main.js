@@ -2,9 +2,120 @@
    Finance-Ang | main.js
    ═══════════════════════════════════════════════ */
 
-// ─── State ───────────────────────────────────────────────────────────────────
-const STORAGE_KEY = 'financeAng_v2';
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+const USER_KEY  = 'financeAng_user';   // { name, pin }
+const DATA_KEY  = 'financeAng_data';   // the financial state
 
+let pinBuffer = '';
+
+// Entry point — decides which screen to show
+function initAuth() {
+  const user = getSavedUser();
+  if (!user) {
+    showRegisterScreen();
+  } else {
+    showLoginScreen(user);
+  }
+}
+
+function getSavedUser() {
+  const raw = localStorage.getItem(USER_KEY);
+  return raw ? JSON.parse(raw) : null;
+}
+
+// ── REGISTER ──────────────────────────────────────────────────────────────────
+function showRegisterScreen() {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('register-panel').style.display = 'block';
+  document.getElementById('login-panel').style.display    = 'none';
+}
+
+function submitRegister() {
+  const name   = document.getElementById('reg-name').value.trim();
+  const pin    = document.getElementById('reg-pin').value.trim();
+  const pinCfm = document.getElementById('reg-pin-confirm').value.trim();
+  const errEl  = document.getElementById('reg-error');
+
+  errEl.textContent = '';
+
+  if (!name) { errEl.textContent = 'Ingresa tu nombre.'; return; }
+  if (!/^\d{4}$/.test(pin)) { errEl.textContent = 'El PIN debe ser 4 dígitos numéricos.'; return; }
+  if (pin !== pinCfm) { errEl.textContent = 'Los PINs no coinciden.'; return; }
+
+  localStorage.setItem(USER_KEY, JSON.stringify({ name, pin }));
+  enterApp();
+}
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+function showLoginScreen(user) {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('register-panel').style.display = 'none';
+  document.getElementById('login-panel').style.display    = 'block';
+
+  const initial = user.name.trim().charAt(0).toUpperCase();
+  document.getElementById('login-initial').textContent = initial;
+  document.getElementById('login-name').textContent    = user.name;
+
+  pinBuffer = '';
+  updateAuthDots();
+  document.getElementById('auth-pin-error').textContent = '';
+}
+
+function authPinKey(digit) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updateAuthDots();
+  if (pinBuffer.length === 4) setTimeout(checkAuthPin, 150);
+}
+
+function authPinBackspace() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updateAuthDots();
+  document.getElementById('auth-pin-error').textContent = '';
+}
+
+function updateAuthDots() {
+  for (let i = 0; i < 4; i++) {
+    const d = document.getElementById(`auth-dot-${i}`);
+    if (d) d.classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+
+function checkAuthPin() {
+  const user = getSavedUser();
+  if (!user) return;
+  if (pinBuffer === user.pin) {
+    enterApp();
+  } else {
+    document.getElementById('auth-pin-error').textContent = 'PIN incorrecto. Intenta de nuevo.';
+    pinBuffer = '';
+    updateAuthDots();
+  }
+}
+
+// ── ENTER APP ──────────────────────────────────────────────────────────────────
+function enterApp() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  loadState();
+  setCurrentMonth();
+  document.getElementById('tx-date').value = today();
+  initCharts();
+  renderAll();
+  applyPrivacyIcons();
+  // Populate the user name in settings
+  const user = getSavedUser();
+  const el = document.getElementById('settings-username');
+  if (el && user) el.textContent = user.name;
+}
+
+// Reset user (for settings)
+function resetUser() {
+  if (!confirm('¿Restablecer usuario? Perderás el PIN guardado pero los datos financieros se conservan.')) return;
+  localStorage.removeItem(USER_KEY);
+  location.reload();
+}
+
+// ─── State ───────────────────────────────────────────────────────────────────
 let state = {
   transactions: [],
   savings: [],
@@ -13,24 +124,18 @@ let state = {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  loadState();
-  setCurrentMonth();   // sets filter-start / filter-end
-
-  // Set today's date on tx modal
-  document.getElementById('tx-date').value = today();
-
-  // Form listeners
+  initAuth();
   document.getElementById('tx-form').addEventListener('submit', onNewTransaction);
   document.getElementById('daily-form').addEventListener('submit', onDailyExpense);
   document.getElementById('savings-form').addEventListener('submit', onNewSaving);
-
-  initCharts();
-  renderAll();
-  applyPrivacyIcons();
 });
+
+
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function today() { return new Date().toISOString().split('T')[0]; }
+
 
 function clp(val) {
   return new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP' }).format(val);
@@ -40,22 +145,28 @@ function hiddenOrClp(val, field) {
   return state.privacy[field] ? '••••••' : clp(val);
 }
 
+// SVG paths for eye icon states
+const SVG_EYE_OPEN = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>`;
+const SVG_EYE_OFF  = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>`;
+
 // ─── Persistence ──────────────────────────────────────────────────────────────
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  localStorage.setItem(DATA_KEY, JSON.stringify(state));
 }
 
 function loadState() {
-  const raw = localStorage.getItem(STORAGE_KEY);
+  const raw = localStorage.getItem(DATA_KEY);
   if (raw) {
     const parsed = JSON.parse(raw);
     state = { ...state, ...parsed };
     if (!state.privacy) state.privacy = { balance:false, income:false };
+  } else {
+    state = { transactions:[], savings:[], privacy:{ balance:false, income:false } };
   }
 }
 
 function clearAllData() {
-  if (!confirm('¿Borrar TODOS los datos? Esta acción es irreversible.')) return;
+  if (!confirm('¿Borrar TODOS los datos de este perfil? Esta acción es irreversible.')) return;
   state = { transactions:[], savings:[], privacy:{ balance:false, income:false } };
   saveState();
   location.reload();
@@ -63,11 +174,12 @@ function clearAllData() {
 
 // ─── Navigation ───────────────────────────────────────────────────────────────
 const TABS = {
-  dashboard:    { title:'Dashboard',        sub:'Resumen financiero del periodo.', section:'tab-dashboard' },
-  transactions: { title:'Transacciones',    sub:'Historial completo de movimientos.', section:'tab-transactions' },
-  daily:        { title:'Gasto Diario',     sub:'Registro rápido de gastos de hoy.', section:'tab-daily' },
-  savings:      { title:'Plan de Ahorro',   sub:'Tus metas y objetivos financieros.', section:'tab-savings' },
-  settings:     { title:'Configuración',    sub:'Datos, privacidad y respaldo.', section:'tab-settings' }
+  dashboard:    { title:'Dashboard',             sub:'Resumen financiero del periodo.',           section:'tab-dashboard' },
+  transactions: { title:'Transacciones',         sub:'Historial completo de movimientos.',        section:'tab-transactions' },
+  daily:        { title:'Gasto Diario',          sub:'Registro rápido de gastos de hoy.',         section:'tab-daily' },
+  savings:      { title:'Plan de Ahorro',        sub:'Tus metas y objetivos financieros.',        section:'tab-savings' },
+  reuse:        { title:'Reutilizar Periodo',    sub:'Copia gastos de un mes anterior y ajústalos.', section:'tab-reuse' },
+  settings:     { title:'Configuración',         sub:'Datos, privacidad y respaldo.',             section:'tab-settings' }
 };
 
 let currentTab = 'dashboard';
@@ -144,18 +256,16 @@ const EYE_OFF   = `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98
 
 function togglePrivacy(field) {
   state.privacy[field] = !state.privacy[field];
-  applyPrivacyIcons();
   saveState();
+  applyPrivacyIcons();
   renderStats();
 }
 
 function applyPrivacyIcons() {
-  ['balance', 'income'].forEach(field => {
-    const icon = document.getElementById('eye-icon-' + field);
-    if (icon) {
-      icon.innerHTML = state.privacy[field] ? EYE_OFF : EYE_OPEN;
-    }
-  });
+  const btnBalance = document.getElementById('eye-btn-balance');
+  const btnIncome  = document.getElementById('eye-btn-income');
+  if (btnBalance) btnBalance.innerHTML = state.privacy.balance ? SVG_EYE_OFF : SVG_EYE_OPEN;
+  if (btnIncome)  btnIncome.innerHTML  = state.privacy.income  ? SVG_EYE_OFF : SVG_EYE_OPEN;
 }
 
 // ─── Date Filters ─────────────────────────────────────────────────────────────
@@ -431,6 +541,99 @@ function updateCharts() {
     barChart.data.datasets[0].data = [sum(prev, 'income'),    sum(prev, 'expense')];
     barChart.data.datasets[1].data = [sum(filtered, 'income'), sum(filtered, 'expense')];
     barChart.update();
+  }
+}
+
+// ─── Reutilizar Periodo ───────────────────────────────────────────────────────
+
+// Renders the source-period selector and transaction table
+function renderReusePanel() {
+  const startEl = document.getElementById('reuse-src-start');
+  const endEl   = document.getElementById('reuse-src-end');
+  const tbody   = document.getElementById('reuse-tbody');
+  const info    = document.getElementById('reuse-info');
+  if (!startEl || !tbody) return;
+
+  const start = startEl.value;
+  const end   = endEl.value;
+
+  if (!start || !end) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Selecciona un rango de fechas de origen.</td></tr>`;
+    return;
+  }
+
+  const source = state.transactions.filter(tx => tx.date >= start && tx.date <= end)
+                   .sort((a,b) => a.date.localeCompare(b.date));
+
+  if (source.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state">Sin transacciones en ese periodo.</td></tr>`;
+    if (info) info.textContent = '';
+    return;
+  }
+
+  if (info) info.textContent = `${source.length} transacción(es) encontradas. Edita los montos y asigna la nueva fecha.`;
+
+  tbody.innerHTML = source.map((tx, i) => `
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:0.6rem 0.5rem;">
+        <span class="tx-amount ${tx.type}" style="font-size:0.78rem;">${tx.type === 'income' ? '▲ Ingreso' : '▼ Gasto'}</span>
+      </td>
+      <td style="padding:0.6rem 0.5rem; color:var(--text); font-size:0.875rem;">${tx.description}</td>
+      <td style="padding:0.6rem 0.5rem; color:var(--text-muted); font-size:0.8rem;">${tx.category}</td>
+      <td style="padding:0.6rem 0.5rem;">
+        <input type="number" id="reuse-amt-${i}" value="${tx.amount}" min="1"
+          style="width:110px; background:var(--bg-card2); border:1px solid var(--border); border-radius:6px;
+                 color:var(--text); padding:4px 8px; font-size:0.85rem; font-family:Outfit,sans-serif;"
+          data-idx="${i}">
+      </td>
+      <td style="padding:0.6rem 0.5rem;">
+        <input type="date" id="reuse-date-${i}" value="${tx.date}"
+          style="background:var(--bg-card2); border:1px solid var(--border); border-radius:6px;
+                 color:var(--text); padding:4px 8px; font-size:0.85rem; font-family:Outfit,sans-serif;"
+          data-idx="${i}">
+      </td>
+    </tr>
+  `).join('');
+
+  // store source snapshot so applyReuse can reference types/descs
+  window._reuseSource = source;
+}
+
+function applyReuse() {
+  const source = window._reuseSource;
+  if (!source || source.length === 0) { alert('Primero carga un periodo origen.'); return; }
+
+  let applied = 0;
+  const errors = [];
+
+  source.forEach((tx, i) => {
+    const amtEl  = document.getElementById(`reuse-amt-${i}`);
+    const dateEl = document.getElementById(`reuse-date-${i}`);
+    const amount = parseFloat(amtEl?.value);
+    const date   = dateEl?.value;
+
+    if (!date) { errors.push(`Fila ${i+1}: falta fecha.`); return; }
+    if (isNaN(amount) || amount <= 0) { errors.push(`Fila ${i+1}: monto inválido.`); return; }
+
+    state.transactions.push({
+      id: Date.now() + i,
+      type: tx.type,
+      category: tx.category,
+      description: tx.description,
+      amount,
+      date
+    });
+    applied++;
+  });
+
+  if (errors.length) {
+    alert('Algunas filas se omitieron:\n' + errors.join('\n'));
+  }
+
+  if (applied > 0) {
+    saveState();
+    renderAll();
+    alert(`✅ ${applied} transacción(es) aplicadas.`);
   }
 }
 
