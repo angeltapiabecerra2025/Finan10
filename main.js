@@ -1,7 +1,8 @@
 // State management
 let state = {
     transactions: [],
-    savings: []
+    savings: [],
+    privacyMode: false
 };
 
 // --- Initialization ---
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('tx-date').value = now.toISOString().split('T')[0];
 
     updateUI();
-    initChart();
+    initCharts();
     
     // Form Listeners
     document.getElementById('main-tx-form').addEventListener('submit', handleNewTransaction);
@@ -32,22 +33,27 @@ document.addEventListener('DOMContentLoaded', () => {
 function saveState() {
     localStorage.setItem('finance_app_state', JSON.stringify(state));
     updateUI();
-    updateChart();
+    updateCharts();
 }
 
 function loadState() {
     const saved = localStorage.getItem('finance_app_state');
     if (saved) {
         state = JSON.parse(saved);
+        if (state.privacyMode === undefined) state.privacyMode = false;
     }
 }
 
-function clearAllData() {
-    if (confirm('¿Estás seguro de que quieres borrar todos los datos? Esta acción no se puede deshacer.')) {
-        state = { transactions: [], savings: [] };
-        saveState();
-        location.reload();
+// --- Privacy Toggle ---
+
+function togglePrivacy() {
+    state.privacyMode = !state.privacyMode;
+    const icon = document.getElementById('privacy-icon');
+    if (window.lucide) {
+        icon.setAttribute('data-lucide', state.privacyMode ? 'eye-off' : 'eye');
+        lucide.createIcons();
     }
+    saveState();
 }
 
 // --- UI Navigation & Drawer ---
@@ -71,8 +77,8 @@ function closeDrawer() {
 }
 
 function switchTab(tabId) {
-    // Update active links (Desktop Sidebar & Mobile Drawer)
-    const links = [...document.querySelectorAll('.nav-link'), ...document.querySelectorAll('.drawer-link')];
+    // Update active links
+    const links = [...document.querySelectorAll('.nav-link'), ...document.querySelectorAll('.drawer-link-gh')];
     
     links.forEach(link => {
         link.classList.remove('active');
@@ -88,19 +94,7 @@ function switchTab(tabId) {
     });
     document.getElementById(`${tabId}-section`).style.display = 'block';
 
-    // Update Header Text
-    const titles = {
-        'dashboard': { title: 'Dashboard', sub: 'Resumen financiero por periodo.' },
-        'transactions': { title: 'Transacciones', sub: 'Historial completo de movimientos.' },
-        'daily': { title: 'Gasto Diario', sub: 'Registro rápido del día.' },
-        'savings': { title: 'Ahorro', sub: 'Metas y objetivos de ahorro.' },
-        'settings': { title: 'Configuración', sub: 'Copia de seguridad y datos.' }
-    };
-    
-    document.getElementById('page-title').innerText = titles[tabId].title;
-    document.getElementById('page-subtitle').innerText = titles[tabId].sub;
-
-    if (tabId === 'dashboard') updateChart();
+    if (tabId === 'dashboard') updateCharts();
     
     closeDrawer();
 }
@@ -131,7 +125,7 @@ function handleNewTransaction(e) {
         category,
         description: desc,
         amount,
-        date: dateInput // Uses the user-selected date
+        date: dateInput
     };
     
     state.transactions.push(newTx);
@@ -185,7 +179,6 @@ function addContribution(id) {
     const saving = state.savings.find(s => s.id === id);
     if (saving) {
         saving.current += amount;
-        
         state.transactions.push({
             id: Date.now(),
             type: 'expense',
@@ -194,22 +187,20 @@ function addContribution(id) {
             amount: amount,
             date: new Date().toISOString().split('T')[0]
         });
-        
         saveState();
     }
 }
 
 // --- UI Updates & Filtering ---
 
-function getFilteredTransactions() {
-    const start = document.getElementById('filter-start').value;
-    const end = document.getElementById('filter-end').value;
+function getFilteredTransactions(customStart, customEnd) {
+    const start = customStart || document.getElementById('filter-start').value;
+    const end = customEnd || document.getElementById('filter-end').value;
     
     if (!start || !end) return state.transactions;
     
     return state.transactions.filter(tx => {
-        const txDate = tx.date; // already YYYY-MM-DD
-        return txDate >= start && txDate <= end;
+        return tx.date >= start && tx.date <= end;
     });
 }
 
@@ -242,8 +233,6 @@ function updateUI() {
     renderDailyList(todayStr);
     renderSavings();
     
-    updateChart(filtered);
-    
     if (window.lucide) lucide.createIcons();
 }
 
@@ -260,11 +249,11 @@ function renderTransactionLists(filtered) {
                     <i data-lucide="${tx.type === 'income' ? 'arrow-down-left' : 'arrow-up-right'}" style="color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}"></i>
                 </div>
                 <div class="tx-details">
-                    <span class="name" style="color: white;">${tx.description}</span>
-                    <span class="date">${tx.date} • ${tx.category}</span>
+                    <span class="name" style="color: white; font-weight: 500;">${tx.description}</span>
+                    <span class="date" style="font-size: 0.75rem; color: #94a3b8;">${tx.date} • ${tx.category}</span>
                 </div>
             </div>
-            <div class="amount" style="color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}">
+            <div class="amount" style="font-weight: 600; color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}">
                 ${tx.type === 'income' ? '+' : '-'}${formatCurrency(tx.amount)}
             </div>
         </div>
@@ -281,7 +270,7 @@ function renderDailyList(todayStr) {
     list.innerHTML = todayTx.map(tx => `
         <div class="transaction-item">
             <span class="name" style="color: white;">${tx.description}</span>
-            <span class="amount expense">${formatCurrency(tx.amount)}</span>
+            <span class="amount expense" style="font-weight: 600;">${formatCurrency(tx.amount)}</span>
         </div>
     `).join('') || '<p class="text-muted" style="text-align:center;">Sin gastos hoy.</p>';
 }
@@ -294,13 +283,13 @@ function renderSavings() {
             <div class="saving-card">
                 <div class="saving-info">
                     <strong style="color: white;">${s.name}</strong>
-                    <span style="color: var(--text-muted);">${formatCurrency(s.current)} / ${formatCurrency(s.target)}</span>
+                    <span style="color: #94a3b8;">${formatCurrency(s.current)} / ${formatCurrency(s.target)}</span>
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-bar" style="width: ${progress}%"></div>
                 </div>
                 <button class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.8rem;" onclick="addContribution(${s.id})">
-                    <i data-lucide="plus"></i> Agregar Fondos
+                    <i data-lucide="plus"></i> Ahorrar
                 </button>
             </div>
         `;
@@ -310,57 +299,93 @@ function renderSavings() {
 // --- Utils ---
 
 function formatCurrency(val) {
+    if (state.privacyMode) return '****';
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(val);
 }
 
 // --- Chart.js Integration ---
 
 let expenseChart;
+let barChart;
 
-function initChart() {
-    const ctx = document.getElementById('expenseChart').getContext('2d');
-    expenseChart = new Chart(ctx, {
+function initCharts() {
+    // Doughnut Chart
+    const ctxPie = document.getElementById('expenseChart').getContext('2d');
+    expenseChart = new Chart(ctxPie, {
         type: 'doughnut',
+        data: { labels: [], datasets: [{ data: [], backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#94a3b8'], borderWidth: 0 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#ffffff' } } }, cutout: '70%' }
+    });
+
+    // Bar Chart
+    const ctxBar = document.getElementById('periodComparisonChart').getContext('2d');
+    barChart = new Chart(ctxBar, {
+        type: 'bar',
         data: {
-            labels: [],
-            datasets: [{
-                data: [],
-                backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#94a3b8'],
-                borderWidth: 0,
-                hoverOffset: 10
-            }]
+            labels: ['Ingresos', 'Gastos'],
+            datasets: [
+                { label: 'Periodo Anterior', data: [0, 0], backgroundColor: 'rgba(255, 255, 255, 0.1)', borderRadius: 4 },
+                { label: 'Periodo Actual', data: [0, 0], backgroundColor: '#10b981', borderRadius: 4 }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#ffffff', font: { family: 'Outfit' } }
-                }
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                x: { ticks: { color: '#94a3b8' } }
             },
-            cutout: '70%'
+            plugins: { legend: { labels: { color: '#ffffff' } } }
         }
     });
+    
+    updateCharts();
 }
 
-function updateChart(filteredData) {
-    if (!expenseChart) return;
+function updateCharts() {
+    if (!expenseChart || !barChart) return;
     
-    const displayData = filteredData || getFilteredTransactions();
+    const currentData = getFilteredTransactions();
+    
+    // Doughnut Update
     const categories = {};
-    const expenses = displayData.filter(tx => tx.type === 'expense');
-    
-    expenses.forEach(tx => {
+    currentData.filter(tx => tx.type === 'expense').forEach(tx => {
         categories[tx.category] = (categories[tx.category] || 0) + tx.amount;
     });
-    
     expenseChart.data.labels = Object.keys(categories);
     expenseChart.data.datasets[0].data = Object.values(categories);
     expenseChart.update();
+
+    // Bar Chart Update (Comparative)
+    const start = new Date(document.getElementById('filter-start').value);
+    const end = new Date(document.getElementById('filter-end').value);
+    const diff = end - start;
+    
+    const prevEnd = new Date(start);
+    prevEnd.setDate(prevEnd.getDate() - 1);
+    const prevStart = new Date(prevEnd);
+    prevStart.setTime(prevStart.getTime() - diff);
+
+    const prevData = getFilteredTransactions(
+        prevStart.toISOString().split('T')[0],
+        prevEnd.toISOString().split('T')[0]
+    );
+
+    const calc = (data) => {
+        const inc = data.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0);
+        const exp = data.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
+        return [inc, exp];
+    };
+
+    const currentTotals = calc(currentData);
+    const prevTotals = calc(prevData);
+
+    barChart.data.datasets[0].data = prevTotals;
+    barChart.data.datasets[1].data = currentTotals;
+    barChart.update();
 }
 
-// --- Export / Import ---
+// --- Backup ---
 
 function exportData() {
     const dataStr = JSON.stringify(state, null, 2);
@@ -368,26 +393,20 @@ function exportData() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `finanzas_backup_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `finanzas_backup.json`;
     link.click();
 }
 
 function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
     const reader = new FileReader();
     reader.onload = (e) => {
         try {
-            const importedState = JSON.parse(e.target.result);
-            if (importedState.transactions) {
-                state = importedState;
-                saveState();
-                location.reload();
-            }
-        } catch (err) {
-            alert('Error al importar');
-        }
+            state = JSON.parse(e.target.result);
+            saveState();
+            location.reload();
+        } catch (err) { alert('Error'); }
     };
     reader.readAsText(file);
 }

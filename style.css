@@ -120,8 +120,14 @@ body {
 }
 
 .header h1 {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
 }
 
 .balance-card {
@@ -268,89 +274,115 @@ input:focus, select:focus {
   margin-top: 1rem;
 }
 
-/* Mobile Helper */
-.mobile-only {
-  display: none;
-}
-
-.btn-icon {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Side Drawer (Mobile) */
-.mobile-drawer {
+/* GitHub Style Drawer (Mobile) */
+.github-drawer {
   position: fixed;
   top: 0;
-  left: -300px;
-  width: 280px;
+  left: -100%;
+  width: 100%;
+  max-width: 320px;
   height: 100%;
+  background: #ffffff;
   z-index: 2000;
-  padding: 2rem;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease-in-out;
-  border-radius: 0 16px 16px 0;
-  border: none;
-  border-right: 1px solid var(--glass-border);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 20px rgba(0,0,0,0.2);
 }
 
-.mobile-drawer.open {
-  transform: translateX(300px);
+.github-drawer.open {
+  left: 0;
 }
 
-.drawer-header {
+.drawer-header-gh {
+  padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3rem;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
 }
 
-.drawer-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.drawer-link {
+.drawer-branding {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 1rem;
-  border-radius: 12px;
-  color: #ffffff; /* White text as requested */
+}
+
+.gh-username {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1f2328;
+}
+
+.gh-repo {
+  font-size: 0.75rem;
+  color: #656d76;
+}
+
+.drawer-sections {
+  padding: 1rem 0;
+  overflow-y: auto;
+}
+
+.drawer-section {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.5rem;
+}
+
+.drawer-link-gh {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 6px;
+  color: #1f2328;
   text-decoration: none;
-  transition: var(--transition);
-  font-weight: 500;
+  font-size: 0.875rem;
+  transition: background 0.2s;
 }
 
-.drawer-link:hover, .drawer-link.active {
-  background: rgba(16, 185, 129, 0.2);
-  color: var(--primary);
+.drawer-link-gh:hover {
+  background: #f3f4f6;
 }
 
-.drawer-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  z-index: 1500;
-  display: none;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+.drawer-link-gh.active {
+  background: #f3f4f6;
+  font-weight: 600;
 }
 
-.drawer-overlay.active {
-  display: block;
-  opacity: 1;
+.drawer-link-gh svg {
+  width: 18px;
+  height: 18px;
+  color: #656d76;
+}
+
+.drawer-divider {
+  height: 1px;
+  background: #d0d7de;
+  margin: 0.5rem 0;
+}
+
+.btn-icon-gh {
+  background: none;
+  border: 1px solid transparent;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-icon-gh:hover {
+  background: rgba(255,255,255,0.05);
+}
+
+.btn-icon-gh svg {
+  width: 20px;
+  height: 24px;
 }
 
 /* Responsive Styles */
@@ -365,8 +397,8 @@ input:focus, select:focus {
   .mobile-only {
     display: flex;
   }
-  .header h1 {
-    font-size: 1.5rem;
+  .desktop-only {
+    display: none;
   }
 }
 

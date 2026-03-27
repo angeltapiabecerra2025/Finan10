@@ -59,50 +59,69 @@
             </div>
         </aside>
 
-        <!-- Barra de Navegación Móvil (Drawer) -->
-        <aside id="mobile-drawer" class="mobile-only glass">
-            <div class="drawer-header">
-                <div class="logo">
-                    <i data-lucide="wallet" style="color: var(--primary);"></i>
-                    <span>FinanceFlow</span>
+        <!-- Barra de Navegación Móvil (GitHub Style) -->
+        <aside id="mobile-drawer" class="mobile-only github-drawer">
+            <div class="drawer-header-gh">
+                <div class="drawer-branding">
+                    <i data-lucide="github" style="color: white; background: #1f2328; padding: 4px; border-radius: 50%;"></i>
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="gh-username">angel...2025</span>
+                        <span class="gh-repo">Finan10</span>
+                    </div>
                 </div>
-                <i data-lucide="x" onclick="toggleDrawer()" style="cursor: pointer; color: white;"></i>
+                <button class="btn-icon" onclick="toggleDrawer()">
+                    <i data-lucide="x" style="color: #656d76;"></i>
+                </button>
             </div>
-            <nav class="drawer-links">
-                <a href="javascript:void(0)" class="drawer-link active" onclick="switchTab('dashboard')">
-                    <i data-lucide="layout-dashboard"></i> Dashboard
-                </a>
-                <a href="javascript:void(0)" class="drawer-link" onclick="switchTab('transactions')">
-                    <i data-lucide="arrow-up-right"></i> Transacciones
-                </a>
-                <a href="javascript:void(0)" class="drawer-link" onclick="switchTab('daily')">
-                    <i data-lucide="zap"></i> Gasto Diario
-                </a>
-                <a href="javascript:void(0)" class="drawer-link" onclick="switchTab('savings')">
-                    <i data-lucide="piggy-bank"></i> Ahorro
-                </a>
-                <a href="javascript:void(0)" class="drawer-link" onclick="switchTab('settings')">
-                    <i data-lucide="settings"></i> Configuración
-                </a>
-            </nav>
+            
+            <div class="drawer-sections">
+                <div class="drawer-section">
+                    <a href="javascript:void(0)" class="drawer-link-gh active" onclick="switchTab('dashboard')">
+                        <i data-lucide="home"></i> Home
+                    </a>
+                    <a href="javascript:void(0)" class="drawer-link-gh" onclick="switchTab('transactions')">
+                        <i data-lucide="list"></i> Transacciones
+                    </a>
+                    <a href="javascript:void(0)" class="drawer-link-gh" onclick="switchTab('daily')">
+                        <i data-lucide="zap"></i> Gasto Diario
+                    </a>
+                    <a href="javascript:void(0)" class="drawer-link-gh" onclick="switchTab('savings')">
+                        <i data-lucide="piggy-bank"></i> Ahorro
+                    </a>
+                </div>
+                
+                <div class="drawer-divider"></div>
+                
+                <div class="drawer-section">
+                    <a href="javascript:void(0)" class="drawer-link-gh" onclick="switchTab('settings')">
+                        <i data-lucide="settings"></i> Configuración
+                    </a>
+                </div>
+            </div>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
             <!-- Header Section -->
             <header class="header">
-                <div style="display: flex; align-items: center; gap: 1rem;">
-                    <button id="menu-toggle" class="mobile-only btn-icon" onclick="toggleDrawer()">
-                        <i data-lucide="menu" style="color: white;"></i>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <button id="menu-toggle" class="mobile-only btn-icon-gh" onclick="toggleDrawer()">
+                        <i data-lucide="menu" style="color: #94a3b8;"></i>
                     </button>
                     <div>
                         <h1 id="page-title">Dashboard</h1>
-                        <p class="text-muted" id="page-subtitle">Bienvenido de nuevo, acá está tu resumen.</p>
+                        <p class="text-muted" id="page-subtitle">Periodo: Actual</p>
                     </div>
                 </div>
-                <button class="btn btn-primary" onclick="openModal('tx-modal')">
-                    <i data-lucide="plus"></i> Nueva Transacción
-                </button>
+                
+                <div style="display: flex; gap: 0.75rem; align-items: center;">
+                    <button id="privacy-toggle" class="btn-icon-gh" onclick="togglePrivacy()" title="Ocultar montos">
+                        <i data-lucide="eye" id="privacy-icon"></i>
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="openModal('tx-modal')">
+                        <i data-lucide="plus"></i> <span class="desktop-only">Nueva</span>
+                    </button>
+                </div>
             </header>
 
             <!-- SECCIÓN: DASHBOARD -->
@@ -142,21 +161,29 @@
                 <div class="grid-2">
                     <div class="module-card glass">
                         <div class="module-header">
-                            <span class="module-title">Resumen de Gastos</span>
+                            <span class="module-title">Gastos por Categoría</span>
                         </div>
                         <div class="chart-container">
                             <canvas id="expenseChart"></canvas>
                         </div>
                     </div>
-                    
+
                     <div class="module-card glass">
                         <div class="module-header">
-                            <span class="module-title">Transacciones Recientes</span>
+                            <span class="module-title">Comparativa de Periodos</span>
                         </div>
-                        <div id="recent-transactions" class="transaction-list">
-                            <!-- JS populated -->
-                            <p class="text-muted" style="text-align: center; padding: 2rem;">No hay transacciones aún.</p>
+                        <div class="chart-container">
+                            <canvas id="periodComparisonChart"></canvas>
                         </div>
+                    </div>
+                </div>
+
+                <div class="module-card glass" style="margin-top: 2rem;">
+                    <div class="module-header">
+                        <span class="module-title">Transacciones Recientes</span>
+                    </div>
+                    <div id="recent-transactions" class="transaction-list">
+                        <!-- JS populated -->
                     </div>
                 </div>
             </section>
