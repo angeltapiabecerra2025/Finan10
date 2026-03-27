@@ -1,285 +1,331 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinanceFlow | Gestión de Finanzas</title>
-    
-    <!-- Google Fonts: Outfit -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Local Styles -->
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Finance-Ang: Tu gestor de finanzas personales. Registra ingresos, gastos y planes de ahorro." />
+  <title>Finance-Ang | Finanzas Personales</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar (Desktop) -->
-        <aside class="sidebar">
-            <div class="logo">
-                <i data-lucide="wallet"></i>
-                <span>FinanceFlow</span>
-            </div>
-            
-            <nav class="nav-links">
-                <div class="nav-item">
-                    <a href="javascript:void(0)" class="nav-link active" onclick="switchTab('dashboard')">
-                        <i data-lucide="layout-dashboard"></i> Dashboard
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="javascript:void(0)" class="nav-link" onclick="switchTab('transactions')">
-                        <i data-lucide="arrow-right-left"></i> Transacciones
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="javascript:void(0)" class="nav-link" onclick="switchTab('daily')">
-                        <i data-lucide="zap"></i> Gasto Diario
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="javascript:void(0)" class="nav-link" onclick="switchTab('savings')">
-                        <i data-lucide="piggy-bank"></i> Plan de Ahorro
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="javascript:void(0)" class="nav-link" onclick="switchTab('settings')">
-                        <i data-lucide="settings"></i> Configuración
-                    </a>
-                </div>
-            </nav>
-        </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Header -->
-            <header class="header">
-                <div>
-                    <h1 id="page-title">Dashboard</h1>
-                    <p class="text-muted" id="page-subtitle">Periodo: Actual</p>
-                </div>
-                <button class="btn btn-primary" onclick="openModal('tx-modal')">
-                    <i data-lucide="plus"></i> <span>Nueva Transacción</span>
-                </button>
-            </header>
+<!-- ───── LAYOUT ───────────────────────────────── -->
+<div class="layout">
 
-            <!-- SECCIÓN: DASHBOARD -->
-            <section id="dashboard-section" class="tab-content">
-                <!-- Filtros -->
-                <div class="card" style="margin-bottom: 1.5rem; padding: 1.25rem;">
-                    <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
-                        <div style="flex: 1; min-width: 140px;">
-                            <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Desde</label>
-                            <input type="date" id="filter-start">
-                        </div>
-                        <div style="flex: 1; min-width: 140px;">
-                            <label style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase;">Hasta</label>
-                            <input type="date" id="filter-end">
-                        </div>
-                        <button class="btn btn-primary" onclick="updateUI()" style="height: 42px;">
-                            <i data-lucide="filter"></i> Filtrar
-                        </button>
-                    </div>
-                </div>
-
-                <div class="balance-grid">
-                    <!-- Balance Total -->
-                    <div class="card stat-card">
-                        <div class="stat-label">
-                            <span>Balance Total</span>
-                            <button class="btn-icon-sm" onclick="togglePrivacy('balance')" title="Ocultar Balance">
-                                <i data-lucide="eye" id="eye-balance"></i>
-                            </button>
-                        </div>
-                        <div class="amount-container">
-                            <span class="amount" id="total-balance">$0.00</span>
-                        </div>
-                    </div>
-                    <!-- Ingresos del Mes -->
-                    <div class="card stat-card">
-                        <div class="stat-label">
-                            <span>Ingresos del Mes</span>
-                            <button class="btn-icon-sm" onclick="togglePrivacy('income')" title="Ocultar Salario">
-                                <i data-lucide="eye" id="eye-income"></i>
-                            </button>
-                        </div>
-                        <div class="amount-container">
-                            <span class="amount income" id="month-income">$0.00</span>
-                        </div>
-                    </div>
-                    <!-- Gastos del Mes -->
-                    <div class="card stat-card">
-                        <div class="stat-label">Gastos del Mes</div>
-                        <div class="amount-container">
-                            <span class="amount expense" id="month-expense">$0.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="grid-2" style="margin-top: 1.5rem;">
-                    <div class="card">
-                        <div class="stat-label" style="margin-bottom: 1rem;">Gastos p/ Categoría</div>
-                        <div class="chart-container">
-                            <canvas id="expenseChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="stat-label" style="margin-bottom: 1rem;">Comparativa Periodos</div>
-                        <div class="chart-container">
-                            <canvas id="periodComparisonChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-top: 1.5rem;">
-                    <div class="stat-label" style="margin-bottom: 1rem;">Transacciones Recientes</div>
-                    <div id="recent-transactions" class="transaction-list">
-                        <!-- JS populated -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Otras secciones (Transacciones, Diario, Ahorro, Config) -->
-            <section id="transactions-section" class="tab-content" style="display: none;">
-                <div class="card shadow-md">
-                    <div class="stat-label" style="margin-bottom: 1rem;">Todo el Historial</div>
-                    <div id="full-transaction-list" class="transaction-list"></div>
-                </div>
-            </section>
-
-            <section id="daily-section" class="tab-content" style="display: none;">
-                <div class="grid-2">
-                    <div class="card">
-                        <div class="stat-label" style="margin-bottom: 1.25rem;">Registrar Gasto de Hoy</div>
-                        <form id="daily-expense-form">
-                            <div style="margin-bottom: 1rem;">
-                                <label>Gasto</label>
-                                <input type="text" id="daily-desc" placeholder="Ej: Comida..." required>
-                            </div>
-                            <div style="margin-bottom: 1rem;">
-                                <label>Monto</label>
-                                <input type="number" id="daily-amount" placeholder="0.00" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">Registrar</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <div class="header">
-                            <span class="stat-label">Gastos de Hoy</span>
-                            <span class="amount expense" id="daily-total" style="font-size: 1.25rem;">$0</span>
-                        </div>
-                        <div id="daily-list" class="transaction-list"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="savings-section" class="tab-content" style="display: none;">
-                <div class="grid-2">
-                    <div class="card">
-                        <div class="stat-label" style="margin-bottom: 1.25rem;">Nueva Meta</div>
-                        <form id="savings-form">
-                            <div style="margin-bottom: 1rem;">
-                                <label>Objetivo</label>
-                                <input type="text" id="saving-name" placeholder="Ej: Viaje..." required>
-                            </div>
-                            <div style="margin-bottom: 1rem;">
-                                <label>Monto</label>
-                                <input type="number" id="saving-target" placeholder="0.00" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary" style="width: 100%;">Crear Meta</button>
-                        </form>
-                    </div>
-                    <div class="card">
-                        <div class="stat-label" style="margin-bottom: 1.25rem;">Metas en Curso</div>
-                        <div id="savings-list"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="settings-section" class="tab-content" style="display: none;">
-                <div class="card">
-                    <div class="stat-label" style="margin-bottom: 1.25rem;">Gestión de Datos</div>
-                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                        <button class="btn btn-primary" onclick="exportData()">Exportar JSON</button>
-                        <button class="btn" onclick="document.getElementById('import-file').click()">Importar JSON</button>
-                        <input type="file" id="import-file" style="display: none;" onchange="importData(event)">
-                        <button class="btn" style="background: var(--danger); color: white;" onclick="clearAllData()">Borrar Todo</button>
-                    </div>
-                </div>
-            </section>
-        </main>
+  <!-- SIDEBAR (desktop) -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm0 0v20M2 12h20"/></svg>
+      </div>
+      <span class="brand-name">Finance<span>-Ang</span></span>
     </div>
 
-    <!-- Barra de Navegación Inferior (Móvil) -->
-    <nav class="bottom-nav">
-        <a href="javascript:void(0)" class="bottom-link active" onclick="switchTab('dashboard')">
-            <i data-lucide="layout-dashboard"></i><span>Inicio</span>
-        </a>
-        <a href="javascript:void(0)" class="bottom-link" onclick="switchTab('transactions')">
-            <i data-lucide="arrow-right-left"></i><span>Historial</span>
-        </a>
-        <a href="javascript:void(0)" class="bottom-link" onclick="switchTab('daily')">
-            <i data-lucide="zap"></i><span>Día</span>
-        </a>
-        <a href="javascript:void(0)" class="bottom-link" onclick="switchTab('savings')">
-            <i data-lucide="piggy-bank"></i><span>Ahorro</span>
-        </a>
-        <a href="javascript:void(0)" class="bottom-link" onclick="switchTab('settings')">
-            <i data-lucide="settings"></i><span>Conf.</span>
-        </a>
-    </nav>
+    <span class="nav-section-label">Principal</span>
 
-    <!-- Modal Transacción -->
-    <div id="tx-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="header" style="margin-bottom: 1.5rem;">
-                <h3 style="font-weight: 700;">Nueva Transacción</h3>
-                <i data-lucide="x" style="cursor: pointer;" onclick="closeModal('tx-modal')"></i>
-            </div>
-            <form id="main-tx-form">
-                <div style="margin-bottom: 1rem;">
-                    <label>Tipo</label>
-                    <select id="tx-type">
-                        <option value="income">Ingreso</option>
-                        <option value="expense">Gasto</option>
-                    </select>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label>Categoría</label>
-                    <select id="tx-category">
-                        <option value="salary">Salario</option>
-                        <option value="food">Comida</option>
-                        <option value="transport">Transporte</option>
-                        <option value="housing">Vivienda</option>
-                        <option value="health">Salud</option>
-                        <option value="other">Otros</option>
-                    </select>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label>Descripción</label>
-                    <input type="text" id="tx-desc" required>
-                </div>
-                <div style="margin-bottom: 1rem;">
-                    <label>Fecha</label>
-                    <input type="date" id="tx-date">
-                </div>
-                <div style="margin-bottom: 1.5rem;">
-                    <label>Monto</label>
-                    <input type="number" id="tx-amount" required>
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Guardar</button>
-            </form>
+    <button class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" id="nav-transactions" onclick="switchTab('transactions')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3M7 16l-4-4m0 0l4-4m-4 4h18"/></svg>
+      Transacciones
+    </button>
+    <button class="nav-item" id="nav-daily" onclick="switchTab('daily')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      Gasto Diario
+    </button>
+    <button class="nav-item" id="nav-savings" onclick="switchTab('savings')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
+      Plan de Ahorro
+    </button>
+
+    <span class="nav-section-label" style="margin-top:auto;">Sistema</span>
+    <button class="nav-item" id="nav-settings" onclick="switchTab('settings')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.432l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.432l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+      Configuración
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menú">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
+        </button>
+        <div class="topbar-title">
+          <h1 id="page-title">Dashboard</h1>
+          <p id="page-subtitle">Resumen financiero del periodo.</p>
         </div>
-    </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn btn-primary" onclick="openModal('tx-modal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          <span>Nueva Transacción</span>
+        </button>
+      </div>
+    </header>
 
-    <script src="main.js"></script>
-    <script>lucide.createIcons();</script>
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ════ TAB: DASHBOARD ════ -->
+      <section class="tab-section active" id="tab-dashboard">
+
+        <!-- Filtros de Fecha -->
+        <div class="filter-bar">
+          <div>
+            <label>Desde</label>
+            <input type="date" id="filter-start" onchange="refreshDashboard()">
+          </div>
+          <div>
+            <label>Hasta</label>
+            <input type="date" id="filter-end" onchange="refreshDashboard()">
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="setCurrentMonth()">Este Mes</button>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-label">
+              Balance Total
+              <button class="eye-btn" id="eye-btn-balance" onclick="togglePrivacy('balance')" title="Mostrar/Ocultar">
+                <svg xmlns="http://www.w3.org/2000/svg" id="eye-icon-balance" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+              </button>
+            </div>
+            <div class="stat-value" id="stat-balance">$0</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">
+              Ingresos del Periodo
+              <button class="eye-btn" id="eye-btn-income" onclick="togglePrivacy('income')" title="Mostrar/Ocultar">
+                <svg xmlns="http://www.w3.org/2000/svg" id="eye-icon-income" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+              </button>
+            </div>
+            <div class="stat-value positive" id="stat-income">$0</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-label">Gastos del Periodo</div>
+            <div class="stat-value negative" id="stat-expense">$0</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-label">Gasto de Hoy</div>
+            <div class="stat-value" id="stat-daily">$0</div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+          <div class="card">
+            <div class="card-title">Categorías</div>
+            <div class="chart-wrapper"><canvas id="chart-donut"></canvas></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Comparativa de Periodos</div>
+            <div class="chart-wrapper"><canvas id="chart-bar"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="card">
+          <div class="tx-list-header">
+            <span class="card-title" style="margin:0;">Recientes</span>
+            <button class="btn btn-ghost btn-sm" onclick="switchTab('transactions')">Ver todo →</button>
+          </div>
+          <div id="recent-list"></div>
+        </div>
+      </section>
+
+      <!-- ════ TAB: TRANSACCIONES ════ -->
+      <section class="tab-section" id="tab-transactions">
+        <div class="card">
+          <div class="tx-list-header">
+            <span class="card-title" style="margin:0;">Historial Completo</span>
+          </div>
+          <div id="full-list"></div>
+        </div>
+      </section>
+
+      <!-- ════ TAB: GASTO DIARIO ════ -->
+      <section class="tab-section" id="tab-daily">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1.25rem;">Registrar Gasto Rápido</div>
+            <form id="daily-form">
+              <div class="form-group">
+                <label>Descripción</label>
+                <input type="text" id="daily-desc" placeholder="Ej: Café, Almuerzo..." required>
+              </div>
+              <div class="form-group">
+                <label>Monto</label>
+                <input type="number" id="daily-amount" placeholder="0" required min="1">
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+                Registrar
+              </button>
+            </form>
+          </div>
+          <div class="card">
+            <div class="tx-list-header">
+              <span class="card-title" style="margin:0;">Hoy</span>
+              <span id="stat-daily-2" style="font-size:1.1rem;font-weight:700;color:var(--danger);">$0</span>
+            </div>
+            <div id="daily-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════ TAB: AHORRO ════ -->
+      <section class="tab-section" id="tab-savings">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1.25rem;">Nueva Meta</div>
+            <form id="savings-form">
+              <div class="form-group">
+                <label>Nombre del Objetivo</label>
+                <input type="text" id="saving-name" placeholder="Ej: Fondo de emergencia..." required>
+              </div>
+              <div class="form-group">
+                <label>Monto Objetivo</label>
+                <input type="number" id="saving-target" placeholder="0" required min="1">
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%;">Crear Meta</button>
+            </form>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1rem;">Mis Metas</div>
+            <div id="savings-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════ TAB: CONFIGURACIÓN ════ -->
+      <section class="tab-section" id="tab-settings">
+        <div class="card">
+          <div class="settings-group">
+            <h3>🔒 Privacidad de Datos Sensibles</h3>
+            <p class="text-muted text-sm" style="margin-bottom:1rem;">
+              Usa el ícono del ojo 👁 que aparece junto a "Balance Total" e "Ingresos" en el Dashboard para ocultar esos valores individualmente con asteriscos (****).
+            </p>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="settings-group">
+            <h3>💾 Copia de Seguridad</h3>
+            <p class="text-muted text-sm" style="margin-bottom:1rem;">Exporta tus datos a un archivo JSON y guárdalo en tu repositorio de GitHub para acceder desde cualquier dispositivo.</p>
+            <div class="btn-group">
+              <button class="btn btn-primary" onclick="exportData()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                Exportar JSON
+              </button>
+              <button class="btn btn-ghost" onclick="document.getElementById('import-file').click()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
+                Importar JSON
+              </button>
+              <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="settings-group">
+            <h3 style="color:var(--danger);">⚠️ Zona de Peligro</h3>
+            <p class="text-muted text-sm" style="margin-bottom:1rem;">Esta acción eliminará todos tus datos permanentemente.</p>
+            <button class="btn btn-danger" onclick="clearAllData()">Borrar Todos los Datos</button>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav" id="mobile-nav">
+  <button class="mobile-nav-item active" id="mnav-dashboard" onclick="switchTab('dashboard')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Inicio</span>
+  </button>
+  <button class="mobile-nav-item" id="mnav-transactions" onclick="switchTab('transactions')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3M7 16l-4-4m0 0l4-4m-4 4h18"/></svg>
+    <span>Historial</span>
+  </button>
+  <button class="mobile-nav-item" id="mnav-daily" onclick="switchTab('daily')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    <span>Hoy</span>
+  </button>
+  <button class="mobile-nav-item" id="mnav-savings" onclick="switchTab('savings')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 5.625c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125"/></svg>
+    <span>Ahorro</span>
+  </button>
+  <button class="mobile-nav-item" id="mnav-settings" onclick="switchTab('settings')">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.432l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.432l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+    <span>Conf.</span>
+  </button>
+</nav>
+
+<!-- MOBILE OVERLAY -->
+<div class="mobile-overlay" id="mobile-overlay" onclick="toggleSidebar()"></div>
+
+<!-- MODAL: Nueva Transacción -->
+<div class="modal-backdrop" id="tx-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Nueva Transacción</h3>
+      <button class="modal-close" onclick="closeModal('tx-modal')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="tx-form">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="tx-type">
+          <option value="income">Ingreso</option>
+          <option value="expense">Gasto</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Categoría</label>
+        <select id="tx-category">
+          <option value="salary">Salario</option>
+          <option value="food">Alimentación</option>
+          <option value="transport">Transporte</option>
+          <option value="housing">Vivienda</option>
+          <option value="health">Salud</option>
+          <option value="entertainment">Entretenimiento</option>
+          <option value="other">Otros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Descripción</label>
+        <input type="text" id="tx-desc" placeholder="Ej: Pago del arriendo..." required>
+      </div>
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" id="tx-date" required>
+      </div>
+      <div class="form-group">
+        <label>Monto</label>
+        <input type="number" id="tx-amount" placeholder="0" required min="1">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">Guardar Transacción</button>
+    </form>
+  </div>
+</div>
+
+<script src="main.js"></script>
 </body>
 </html>

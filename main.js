@@ -1,415 +1,452 @@
-// State management
+/* ═══════════════════════════════════════════════
+   Finance-Ang | main.js
+   ═══════════════════════════════════════════════ */
+
+// ─── State ───────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'financeAng_v2';
+
 let state = {
-    transactions: [],
-    savings: [],
-    privacyBalance: false,
-    privacyIncome: false
+  transactions: [],
+  savings: [],
+  privacy: { balance: false, income: false }
 };
 
-// --- Initialization ---
-
+// ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    loadState();
-    
-    // Set default filter dates (current month)
-    const now = new Date();
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
-    
-    document.getElementById('filter-start').value = firstDay;
-    document.getElementById('filter-end').value = lastDay;
-    const txDateInput = document.getElementById('tx-date');
-    if (txDateInput) txDateInput.value = now.toISOString().split('T')[0];
+  loadState();
+  setCurrentMonth();   // sets filter-start / filter-end
 
-    updateUI();
-    initCharts();
-    
-    // Form Listeners
-    document.getElementById('main-tx-form')?.addEventListener('submit', handleNewTransaction);
-    document.getElementById('daily-expense-form')?.addEventListener('submit', handleDailyExpense);
-    document.getElementById('savings-form')?.addEventListener('submit', handleNewSaving);
+  // Set today's date on tx modal
+  document.getElementById('tx-date').value = today();
+
+  // Form listeners
+  document.getElementById('tx-form').addEventListener('submit', onNewTransaction);
+  document.getElementById('daily-form').addEventListener('submit', onDailyExpense);
+  document.getElementById('savings-form').addEventListener('submit', onNewSaving);
+
+  initCharts();
+  renderAll();
+  applyPrivacyIcons();
 });
 
-// --- State persistence ---
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function today() { return new Date().toISOString().split('T')[0]; }
 
+function clp(val) {
+  return new Intl.NumberFormat('es-CL', { style:'currency', currency:'CLP' }).format(val);
+}
+
+function hiddenOrClp(val, field) {
+  return state.privacy[field] ? '••••••' : clp(val);
+}
+
+// ─── Persistence ──────────────────────────────────────────────────────────────
 function saveState() {
-    localStorage.setItem('finance_app_state_light', JSON.stringify(state));
-    updateUI();
-    updateCharts();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 function loadState() {
-    const saved = localStorage.getItem('finance_app_state_light');
-    if (saved) {
-        state = JSON.parse(saved);
-        if (state.privacyBalance === undefined) state.privacyBalance = false;
-        if (state.privacyIncome === undefined) state.privacyIncome = false;
-    }
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    state = { ...state, ...parsed };
+    if (!state.privacy) state.privacy = { balance:false, income:false };
+  }
 }
 
 function clearAllData() {
-    if (confirm('¿Borrar todos los datos? No se puede deshacer.')) {
-        state = { transactions: [], savings: [], privacyBalance: false, privacyIncome: false };
-        saveState();
-        location.reload();
-    }
+  if (!confirm('¿Borrar TODOS los datos? Esta acción es irreversible.')) return;
+  state = { transactions:[], savings:[], privacy:{ balance:false, income:false } };
+  saveState();
+  location.reload();
 }
 
-// --- Privacy Toggles ---
+// ─── Navigation ───────────────────────────────────────────────────────────────
+const TABS = {
+  dashboard:    { title:'Dashboard',        sub:'Resumen financiero del periodo.', section:'tab-dashboard' },
+  transactions: { title:'Transacciones',    sub:'Historial completo de movimientos.', section:'tab-transactions' },
+  daily:        { title:'Gasto Diario',     sub:'Registro rápido de gastos de hoy.', section:'tab-daily' },
+  savings:      { title:'Plan de Ahorro',   sub:'Tus metas y objetivos financieros.', section:'tab-savings' },
+  settings:     { title:'Configuración',    sub:'Datos, privacidad y respaldo.', section:'tab-settings' }
+};
 
-function togglePrivacy(type) {
-    if (type === 'balance') {
-        state.privacyBalance = !state.privacyBalance;
-        const icon = document.getElementById('eye-balance');
-        icon?.setAttribute('data-lucide', state.privacyBalance ? 'eye-off' : 'eye');
-    } else if (type === 'income') {
-        state.privacyIncome = !state.privacyIncome;
-        const icon = document.getElementById('eye-income');
-        icon?.setAttribute('data-lucide', state.privacyIncome ? 'eye-off' : 'eye');
-    }
-    
-    if (window.lucide) lucide.createIcons();
-    saveState();
-}
-
-function formatValue(val, sensitiveType) {
-    if (sensitiveType === 'balance' && state.privacyBalance) return '****';
-    if (sensitiveType === 'income' && state.privacyIncome) return '****';
-    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(val);
-}
-
-// --- Navigation ---
+let currentTab = 'dashboard';
 
 function switchTab(tabId) {
-    // Update active links (Desktop & Mobile Bottom Nav)
-    const links = [...document.querySelectorAll('.nav-link'), ...document.querySelectorAll('.bottom-link')];
-    
-    links.forEach(link => {
-        link.classList.remove('active');
-        const onClickAttr = link.getAttribute('onclick') || '';
-        if (onClickAttr.includes(`'${tabId}'`)) {
-            link.classList.add('active');
-        }
-    });
+  if (!TABS[tabId]) return;
+  currentTab = tabId;
 
-    // Update section visibility
-    document.querySelectorAll('.tab-content').forEach(section => {
-        section.style.display = 'none';
-    });
-    const targetSection = document.getElementById(`${tabId}-section`);
-    if (targetSection) targetSection.style.display = 'block';
+  // Sections
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(TABS[tabId].section).classList.add('active');
 
-    const titles = {
-        'dashboard': { title: 'Dashboard', sub: 'Resumen financiero por periodo.' },
-        'transactions': { title: 'Transacciones', sub: 'Historial completo de movimientos.' },
-        'daily': { title: 'Gasto Diario', sub: 'Registro rápido del día.' },
-        'savings': { title: 'Plan de Ahorro', sub: 'Metas y objetivos de ahorro.' },
-        'settings': { title: 'Configuración', sub: 'Copia de seguridad y datos.' }
-    };
-    
-    document.getElementById('page-title').innerText = titles[tabId].title;
-    document.getElementById('page-subtitle').innerText = titles[tabId].sub;
+  // Sidebar nav items
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + tabId);
+  if (navEl) navEl.classList.add('active');
 
-    if (tabId === 'dashboard') updateCharts();
+  // Mobile nav items
+  document.querySelectorAll('.mobile-nav-item').forEach(el => el.classList.remove('active'));
+  const mnavEl = document.getElementById('mnav-' + tabId);
+  if (mnavEl) mnavEl.classList.add('active');
+
+  // Topbar
+  document.getElementById('page-title').textContent   = TABS[tabId].title;
+  document.getElementById('page-subtitle').textContent = TABS[tabId].sub;
+
+  // Close sidebar on mobile after navigation
+  closeSidebar();
+
+  // Refresh charts when going back to dashboard
+  if (tabId === 'dashboard') updateCharts();
 }
 
-// --- Modals ---
+// ─── Sidebar Toggle (Mobile) ──────────────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const overlay  = document.getElementById('mobile-overlay');
+  const isOpen   = sidebar.classList.contains('open');
+  if (isOpen) {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('visible');
+  } else {
+    sidebar.classList.add('open');
+    overlay.classList.add('visible');
+  }
+}
 
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mobile-overlay').classList.remove('visible');
+}
+
+// ─── Modal ────────────────────────────────────────────────────────────────────
 function openModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) modal.style.display = 'flex';
+  const el = document.getElementById(id);
+  if (el) el.classList.add('open');
 }
 
 function closeModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) modal.style.display = 'none';
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('open');
 }
 
-// --- Logic: Transactions ---
+// Close modal clicking backdrop
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal-backdrop')) {
+    e.target.classList.remove('open');
+  }
+});
 
-function handleNewTransaction(e) {
-    e.preventDefault();
-    const type = document.getElementById('tx-type').value;
-    const category = document.getElementById('tx-category').value;
-    const desc = document.getElementById('tx-desc').value;
-    const amount = parseFloat(document.getElementById('tx-amount').value);
-    const dateInput = document.getElementById('tx-date').value;
-    
-    const newTx = {
-        id: Date.now(),
-        type,
-        category,
-        description: desc,
-        amount,
-        date: dateInput
-    };
-    
-    state.transactions.push(newTx);
-    saveState();
-    closeModal('tx-modal');
-    document.getElementById('main-tx-form').reset();
-    document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+// ─── Privacy Toggle ───────────────────────────────────────────────────────────
+const EYE_OPEN  = `<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>`;
+const EYE_OFF   = `<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/>`;
+
+function togglePrivacy(field) {
+  state.privacy[field] = !state.privacy[field];
+  applyPrivacyIcons();
+  saveState();
+  renderStats();
 }
 
-function handleDailyExpense(e) {
-    e.preventDefault();
-    const desc = document.getElementById('daily-desc').value;
-    const amount = parseFloat(document.getElementById('daily-amount').value);
-    
-    const newTx = {
-        id: Date.now(),
-        type: 'expense',
-        category: 'other',
-        description: desc,
-        amount,
-        date: new Date().toISOString().split('T')[0]
-    };
-    
-    state.transactions.push(newTx);
-    saveState();
-    document.getElementById('daily-expense-form').reset();
+function applyPrivacyIcons() {
+  ['balance', 'income'].forEach(field => {
+    const icon = document.getElementById('eye-icon-' + field);
+    if (icon) {
+      icon.innerHTML = state.privacy[field] ? EYE_OFF : EYE_OPEN;
+    }
+  });
 }
 
-// --- Logic: Savings ---
+// ─── Date Filters ─────────────────────────────────────────────────────────────
+function setCurrentMonth() {
+  const now    = new Date();
+  const first  = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+  const last   = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];
+  document.getElementById('filter-start').value = first;
+  document.getElementById('filter-end').value   = last;
+  if (currentTab === 'dashboard') refreshDashboard();
+}
 
-function handleNewSaving(e) {
-    e.preventDefault();
-    const name = document.getElementById('saving-name').value;
-    const target = parseFloat(document.getElementById('saving-target').value);
-    
-    state.savings.push({
-        id: Date.now(),
-        name,
-        target,
-        current: 0
-    });
-    
-    saveState();
-    document.getElementById('savings-form').reset();
+function refreshDashboard() {
+  renderStats();
+  updateCharts();
+  renderRecentList();
+}
+
+function getFiltered(customStart, customEnd) {
+  const start = customStart || document.getElementById('filter-start').value || '';
+  const end   = customEnd   || document.getElementById('filter-end').value   || '';
+  return state.transactions.filter(tx => {
+    if (start && tx.date < start) return false;
+    if (end   && tx.date > end)   return false;
+    return true;
+  });
+}
+
+// ─── Render All ───────────────────────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderRecentList();
+  renderFullList();
+  renderDailyList();
+  renderSavings();
+  updateCharts();
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────────────
+function renderStats() {
+  const filtered = getFiltered();
+
+  const totalBalance = state.transactions.reduce(
+    (acc, tx) => tx.type === 'income' ? acc + tx.amount : acc - tx.amount, 0
+  );
+  const periodIncome  = filtered.filter(t => t.type === 'income').reduce((a,t) => a+t.amount, 0);
+  const periodExpense = filtered.filter(t => t.type === 'expense').reduce((a,t) => a+t.amount, 0);
+  const dailyTotal    = state.transactions
+    .filter(t => t.type === 'expense' && t.date === today())
+    .reduce((a,t) => a+t.amount, 0);
+
+  document.getElementById('stat-balance').textContent = hiddenOrClp(totalBalance, 'balance');
+  document.getElementById('stat-income').textContent  = hiddenOrClp(periodIncome, 'income');
+  document.getElementById('stat-expense').textContent = clp(periodExpense);
+  document.getElementById('stat-daily').textContent   = clp(dailyTotal);
+
+  const el2 = document.getElementById('stat-daily-2');
+  if (el2) el2.textContent = clp(dailyTotal);
+}
+
+// ─── Transactions ─────────────────────────────────────────────────────────────
+function onNewTransaction(e) {
+  e.preventDefault();
+  const type     = document.getElementById('tx-type').value;
+  const category = document.getElementById('tx-category').value;
+  const desc     = document.getElementById('tx-desc').value.trim();
+  const date     = document.getElementById('tx-date').value;
+  const amount   = parseFloat(document.getElementById('tx-amount').value);
+
+  if (!desc || !date || isNaN(amount) || amount <= 0) return;
+
+  state.transactions.push({ id: Date.now(), type, category, description:desc, amount, date });
+  saveState();
+  closeModal('tx-modal');
+  document.getElementById('tx-form').reset();
+  document.getElementById('tx-date').value = today();
+  renderAll();
+}
+
+function onDailyExpense(e) {
+  e.preventDefault();
+  const desc   = document.getElementById('daily-desc').value.trim();
+  const amount = parseFloat(document.getElementById('daily-amount').value);
+
+  if (!desc || isNaN(amount) || amount <= 0) return;
+
+  state.transactions.push({ id:Date.now(), type:'expense', category:'other', description:desc, amount, date:today() });
+  saveState();
+  document.getElementById('daily-form').reset();
+  renderAll();
+}
+
+function txItemHTML(tx) {
+  const isIncome  = tx.type === 'income';
+  const iconPath  = isIncome
+    ? `<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 0 1 5.814-5.519l2.74-1.22m0 0-5.94-2.28m5.94 2.28-2.28 5.941"/>`
+    : `<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6L9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0 3.182-5.511m-3.182 5.51-5.511-3.181"/>`;
+
+  return `
+    <div class="tx-item">
+      <div class="tx-left">
+        <div class="tx-icon ${tx.type}">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">${iconPath}</svg>
+        </div>
+        <div>
+          <div class="tx-name">${tx.description}</div>
+          <div class="tx-meta">${tx.date} · ${tx.category}</div>
+        </div>
+      </div>
+      <div class="tx-amount ${tx.type}">${isIncome ? '+' : '-'}${clp(tx.amount)}</div>
+    </div>`;
+}
+
+function renderRecentList() {
+  const sorted = getFiltered().sort((a,b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const el = document.getElementById('recent-list');
+  if (el) el.innerHTML = sorted.slice(0,8).map(txItemHTML).join('') || `<div class="empty-state">Registra tu primera transacción 💰</div>`;
+}
+
+function renderFullList() {
+  const sorted = [...state.transactions].sort((a,b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const el = document.getElementById('full-list');
+  if (el) el.innerHTML = sorted.map(txItemHTML).join('') || `<div class="empty-state">Aún no hay movimientos registrados.</div>`;
+}
+
+function renderDailyList() {
+  const todayTx = state.transactions.filter(t => t.type === 'expense' && t.date === today());
+  const el = document.getElementById('daily-list');
+  if (el) el.innerHTML = todayTx.map(txItemHTML).join('') || `<div class="empty-state">Libre de gastos hoy 🎉</div>`;
+}
+
+// ─── Savings ──────────────────────────────────────────────────────────────────
+function onNewSaving(e) {
+  e.preventDefault();
+  const name   = document.getElementById('saving-name').value.trim();
+  const target = parseFloat(document.getElementById('saving-target').value);
+
+  if (!name || isNaN(target) || target <= 0) return;
+
+  state.savings.push({ id:Date.now(), name, target, current:0 });
+  saveState();
+  document.getElementById('savings-form').reset();
+  renderSavings();
 }
 
 function addContribution(id) {
-    const amountStr = prompt('¿Cuánto quieres añadir a este ahorro?');
-    const amount = parseFloat(amountStr);
-    if (isNaN(amount) || amount <= 0) return;
-    
-    const saving = state.savings.find(s => s.id === id);
-    if (saving) {
-        saving.current += amount;
-        state.transactions.push({
-            id: Date.now(),
-            type: 'expense',
-            category: 'other',
-            description: `Depósito Ahorro: ${saving.name}`,
-            amount: amount,
-            date: new Date().toISOString().split('T')[0]
-        });
-        saveState();
-    }
-}
+  const rawAmt = prompt('¿Cuánto quieres añadir a este ahorro? (en CLP)');
+  if (!rawAmt) return;
+  const amount = parseFloat(rawAmt);
+  if (isNaN(amount) || amount <= 0) return;
 
-// --- UI Updates & Filtering ---
-
-function getFilteredTransactions(customStart, customEnd) {
-    const start = customStart || document.getElementById('filter-start').value;
-    const end = customEnd || document.getElementById('filter-end').value;
-    
-    if (!start || !end) return state.transactions;
-    
-    return state.transactions.filter(tx => tx.date >= start && tx.date <= end);
-}
-
-function updateUI() {
-    const filtered = getFilteredTransactions();
-    
-    const totalBalanceVal = state.transactions.reduce((acc, tx) => 
-        tx.type === 'income' ? acc + tx.amount : acc - tx.amount, 0);
-    
-    const periodIncome = filtered
-        .filter(tx => tx.type === 'income')
-        .reduce((acc, tx) => acc + tx.amount, 0);
-        
-    const periodExpense = filtered
-        .filter(tx => tx.type === 'expense')
-        .reduce((acc, tx) => acc + tx.amount, 0);
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const dailyTotalVal = state.transactions
-        .filter(tx => tx.type === 'expense' && tx.date === todayStr)
-        .reduce((acc, tx) => acc + tx.amount, 0);
-
-    // Update Cards with sensitive check
-    document.getElementById('total-balance').innerText = formatValue(totalBalanceVal, 'balance');
-    document.getElementById('month-income').innerText = formatValue(periodIncome, 'income');
-    document.getElementById('month-expense').innerText = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(periodExpense);
-    document.getElementById('daily-total').innerText = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(dailyTotalVal);
-
-    renderTransactionLists(filtered);
-    renderDailyList(todayStr);
-    renderSavings();
-    
-    if (window.lucide) lucide.createIcons();
-}
-
-function renderTransactionLists(filtered) {
-    const recentList = document.getElementById('recent-transactions');
-    const fullList = document.getElementById('full-transaction-list');
-    
-    const sorted = [...filtered].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-    
-    const createItemHTML = (tx) => `
-        <div class="transaction-item">
-            <div class="tx-info">
-                <div class="tx-icon">
-                    <i data-lucide="${tx.type === 'income' ? 'trending-up' : 'trending-down'}" style="color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}"></i>
-                </div>
-                <div class="tx-details">
-                    <span class="name">${tx.description}</span>
-                    <span class="date">${tx.date} • ${tx.category}</span>
-                </div>
-            </div>
-            <div class="amount" style="font-weight: 700; color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}">
-                ${tx.type === 'income' ? '+' : '-'}${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(tx.amount)}
-            </div>
-        </div>
-    `;
-
-    if (recentList) recentList.innerHTML = sorted.slice(0, 5).map(createItemHTML).join('') || '<p style="text-align:center; color:#94a3b8; padding:1.5rem;">Sin movimientos.</p>';
-    if (fullList) fullList.innerHTML = sorted.map(createItemHTML).join('') || '<p style="text-align:center; color:#94a3b8; padding:1.5rem;">Sin movimientos.</p>';
-}
-
-function renderDailyList(todayStr) {
-    const list = document.getElementById('daily-list');
-    const todayTx = state.transactions.filter(tx => tx.type === 'expense' && tx.date === todayStr);
-    
-    if (list) list.innerHTML = todayTx.map(tx => `
-        <div class="transaction-item">
-            <span class="name">${tx.description}</span>
-            <span class="amount expense" style="font-weight: 700;">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(tx.amount)}</span>
-        </div>
-    `).join('') || '<p style="text-align:center; color:#94a3b8; padding:1.5rem;">Libre de gastos hoy.</p>';
+  const saving = state.savings.find(s => s.id === id);
+  if (saving) {
+    saving.current += amount;
+    state.transactions.push({
+      id: Date.now(),
+      type:'expense',
+      category:'other',
+      description:`Ahorro: ${saving.name}`,
+      amount,
+      date: today()
+    });
+    saveState();
+    renderAll();
+  }
 }
 
 function renderSavings() {
-    const list = document.getElementById('savings-list');
-    if (list) list.innerHTML = state.savings.map(s => {
-        const progress = Math.min((s.current / s.target) * 100, 100);
-        return `
-            <div style="margin-bottom: 1.25rem;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.875rem;">
-                    <strong style="color:var(--text-main);">${s.name}</strong>
-                    <span style="color:var(--text-muted);">${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(s.current)} / ${new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(s.target)}</span>
-                </div>
-                <div style="background:#f3f4f6; height:8px; border-radius:4px; overflow:hidden; margin-bottom:0.75rem;">
-                    <div style="background:var(--primary); height:100%; width:${progress}%; transition: width 0.3s ease;"></div>
-                </div>
-                <button class="btn btn-primary" style="padding: 0.4rem 0.75rem; font-size: 0.75rem;" onclick="addContribution(${s.id})">Añadir Fondos</button>
-            </div>
-        `;
-    }).join('') || '<p style="text-align:center; color:#94a3b8; padding:1rem;">Crea tu primera meta.</p>';
+  const el = document.getElementById('savings-list');
+  if (!el) return;
+  el.innerHTML = state.savings.map(s => {
+    const pct = Math.min((s.current / s.target)*100, 100).toFixed(0);
+    return `
+      <div class="saving-row">
+        <div class="saving-header">
+          <div>
+            <div class="saving-name">${s.name}</div>
+            <div class="text-muted text-sm" style="margin-top:2px;">${clp(s.current)} de ${clp(s.target)} (${pct}%)</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="addContribution(${s.id})">+ Añadir</button>
+        </div>
+        <div class="progress-bar mt-1">
+          <div class="progress-fill" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  }).join('') || `<div class="empty-state">Crea tu primera meta de ahorro 🏦</div>`;
 }
 
-// --- Charts ---
+// ─── Charts ───────────────────────────────────────────────────────────────────
+let donutChart = null;
+let barChart   = null;
 
-let expenseChart;
-let barChart;
+const CHART_COLORS = ['#6366f1','#10b981','#f59e0b','#f43f5e','#8b5cf6','#ec4899','#3b82f6','#14b8a6'];
 
 function initCharts() {
-    const pieCanvas = document.getElementById('expenseChart');
-    if (pieCanvas) {
-        expenseChart = new Chart(pieCanvas.getContext('2d'), {
-            type: 'doughnut',
-            data: { labels: [], datasets: [{ data: [], backgroundColor: ['#10b981', '#6366f1', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#94a3b8'], borderWidth: 0 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#475569', font: { family: 'Outfit' } } } }, cutout: '75%' }
-        });
-    }
+  const donutCanvas = document.getElementById('chart-donut');
+  const barCanvas   = document.getElementById('chart-bar');
+  if (!donutCanvas || !barCanvas) return;
 
-    const barCanvas = document.getElementById('periodComparisonChart');
-    if (barCanvas) {
-        barChart = new Chart(barCanvas.getContext('2d'), {
-            type: 'bar',
-            data: {
-                labels: ['Ingresos', 'Gastos'],
-                datasets: [
-                    { label: 'Periodo Anterior', data: [0, 0], backgroundColor: '#e2e8f0', borderRadius: 6 },
-                    { label: 'Periodo Actual', data: [0, 0], backgroundColor: '#10b981', borderRadius: 6 }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { grid: { color: '#f1f5f9' }, ticks: { color: '#475569' } },
-                    x: { ticks: { color: '#475569' } }
-                },
-                plugins: { legend: { labels: { color: '#475569', font: { family: 'Outfit' } } } }
-            }
-        });
+  donutChart = new Chart(donutCanvas, {
+    type: 'doughnut',
+    data: { labels:[], datasets:[{ data:[], backgroundColor:CHART_COLORS, borderWidth:0, hoverOffset:8 }] },
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      cutout:'70%',
+      plugins: {
+        legend: { position:'bottom', labels:{ color:'#94a3b8', font:{ family:'Outfit', size:11 }, padding:12 } }
+      }
     }
-    
-    updateCharts();
+  });
+
+  barChart = new Chart(barCanvas, {
+    type: 'bar',
+    data: {
+      labels: ['Ingresos','Gastos'],
+      datasets:[
+        { label:'Periodo Anterior', data:[0,0], backgroundColor:'rgba(148,163,184,0.3)', borderRadius:6 },
+        { label:'Periodo Actual',   data:[0,0], backgroundColor:['#10b981','#f43f5e'],   borderRadius:6 }
+      ]
+    },
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      scales:{
+        x:{ ticks:{ color:'#94a3b8', font:{ family:'Outfit' } }, grid:{ display:false } },
+        y:{ ticks:{ color:'#94a3b8', font:{ family:'Outfit' }, callback: v => clp(v) }, grid:{ color:'rgba(255,255,255,0.04)' } }
+      },
+      plugins: { legend:{ labels:{ color:'#94a3b8', font:{ family:'Outfit', size:11 }, padding:12 } } }
+    }
+  });
+
+  updateCharts();
 }
 
 function updateCharts() {
-    const currentData = getFilteredTransactions();
-    
-    if (expenseChart) {
-        const categories = {};
-        currentData.filter(tx => tx.type === 'expense').forEach(tx => {
-            categories[tx.category] = (categories[tx.category] || 0) + tx.amount;
-        });
-        expenseChart.data.labels = Object.keys(categories);
-        expenseChart.data.datasets[0].data = Object.values(categories);
-        expenseChart.update();
-    }
+  if (!donutChart || !barChart) return;
 
-    if (barChart) {
-        const start = new Date(document.getElementById('filter-start').value);
-        const end = new Date(document.getElementById('filter-end').value);
-        const diff = end - start;
-        const prevEnd = new Date(start);
-        prevEnd.setDate(prevEnd.getDate() - 1);
-        const prevStart = new Date(prevEnd);
-        prevStart.setTime(prevStart.getTime() - diff);
+  const filtered = getFiltered();
+  const cats = {};
+  filtered.filter(t => t.type === 'expense').forEach(t => {
+    cats[t.category] = (cats[t.category] || 0) + t.amount;
+  });
+  donutChart.data.labels = Object.keys(cats);
+  donutChart.data.datasets[0].data = Object.values(cats);
+  donutChart.update();
 
-        const prevData = getFilteredTransactions(
-            prevStart.toISOString().split('T')[0],
-            prevEnd.toISOString().split('T')[0]
-        );
+  // Comparative bar chart
+  const start = document.getElementById('filter-start').value;
+  const end   = document.getElementById('filter-end').value;
+  if (start && end) {
+    const diff      = new Date(end) - new Date(start);
+    const prevEnd   = new Date(new Date(start) - 86400000);
+    const prevStart = new Date(prevEnd - diff);
 
-        const incC = currentData.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0);
-        const expC = currentData.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
-        const incP = prevData.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0);
-        const expP = prevData.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
+    const pFmt  = d => d.toISOString().split('T')[0];
+    const prev  = getFiltered(pFmt(prevStart), pFmt(prevEnd));
 
-        barChart.data.datasets[0].data = [incP, expP];
-        barChart.data.datasets[1].data = [incC, expC];
-        barChart.update();
-    }
+    const sum = (arr, type) => arr.filter(t => t.type === type).reduce((a,t) => a+t.amount, 0);
+
+    barChart.data.datasets[0].data = [sum(prev, 'income'),    sum(prev, 'expense')];
+    barChart.data.datasets[1].data = [sum(filtered, 'income'), sum(filtered, 'expense')];
+    barChart.update();
+  }
 }
 
-// --- Data ---
-
+// ─── Backup ───────────────────────────────────────────────────────────────────
 function exportData() {
-    const dataStr = JSON.stringify(state, null, 2);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `finanzas_backup.json`;
-    link.click();
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `financeang-backup-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            state = JSON.parse(e.target.result);
-            saveState();
-            location.reload();
-        } catch (err) { alert('Error de importación'); }
-    };
-    reader.readAsText(file);
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (Array.isArray(imported.transactions)) {
+        state = imported;
+        if (!state.privacy) state.privacy = { balance:false, income:false };
+        saveState();
+        location.reload();
+      } else { alert('Archivo JSON inválido.'); }
+    } catch { alert('Error al leer el archivo.'); }
+  };
+  reader.readAsText(file);
 }
