@@ -59,13 +59,46 @@
             </div>
         </aside>
 
+        <!-- Barra de Navegación Móvil (Drawer) -->
+        <aside id="mobile-drawer" class="mobile-only glass">
+            <div class="drawer-header">
+                <div class="logo">
+                    <i data-lucide="wallet" style="color: var(--primary);"></i>
+                    <span>FinanceFlow</span>
+                </div>
+                <i data-lucide="x" onclick="toggleDrawer()" style="cursor: pointer; color: white;"></i>
+            </div>
+            <nav class="drawer-links">
+                <a href="javascript:void(0)" class="drawer-link active" onclick="switchTab('dashboard')">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </a>
+                <a href="javascript:void(0)" class="drawer-link" onclick="switchTab('transactions')">
+                    <i data-lucide="arrow-up-right"></i> Transacciones
+                </a>
+                <a href="javascript:void(0)" class="drawer-link" onclick="switchTab('daily')">
+                    <i data-lucide="zap"></i> Gasto Diario
+                </a>
+                <a href="javascript:void(0)" class="drawer-link" onclick="switchTab('savings')">
+                    <i data-lucide="piggy-bank"></i> Ahorro
+                </a>
+                <a href="javascript:void(0)" class="drawer-link" onclick="switchTab('settings')">
+                    <i data-lucide="settings"></i> Configuración
+                </a>
+            </nav>
+        </aside>
+
         <!-- Main Content -->
         <main class="main-content">
             <!-- Header Section -->
             <header class="header">
-                <div>
-                    <h1 id="page-title">Dashboard</h1>
-                    <p class="text-muted" id="page-subtitle">Bienvenido de nuevo, acá está tu resumen.</p>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <button id="menu-toggle" class="mobile-only btn-icon" onclick="toggleDrawer()">
+                        <i data-lucide="menu" style="color: white;"></i>
+                    </button>
+                    <div>
+                        <h1 id="page-title">Dashboard</h1>
+                        <p class="text-muted" id="page-subtitle">Bienvenido de nuevo, acá está tu resumen.</p>
+                    </div>
                 </div>
                 <button class="btn btn-primary" onclick="openModal('tx-modal')">
                     <i data-lucide="plus"></i> Nueva Transacción
@@ -74,6 +107,23 @@
 
             <!-- SECCIÓN: DASHBOARD -->
             <section id="dashboard-section" class="tab-content">
+                <!-- Filtros de Fecha -->
+                <div class="filters-card glass" style="margin-bottom: 2rem; padding: 1.5rem;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: flex-end;">
+                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                            <label>Desde:</label>
+                            <input type="date" id="filter-start">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                            <label>Hasta:</label>
+                            <input type="date" id="filter-end">
+                        </div>
+                        <button class="btn btn-primary" onclick="updateUI()">
+                            <i data-lucide="filter"></i> Filtrar Periodo
+                        </button>
+                    </div>
+                </div>
+
                 <div class="balance-card glass">
                     <div class="stat-item">
                         <h3>Balance Total</h3>
@@ -252,6 +302,10 @@
                     <input type="text" id="tx-desc" placeholder="..." required>
                 </div>
                 <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="tx-date">
+                </div>
+                <div class="form-group">
                     <label>Monto</label>
                     <input type="number" id="tx-amount" placeholder="0.00" required>
                 </div>
@@ -309,29 +363,8 @@
         }
     </style>
 
-    <!-- Barra de Navegación Móvil -->
-    <nav class="mobile-nav glass">
-        <a href="#" class="mobile-nav-link active" onclick="switchTab('dashboard')">
-            <i data-lucide="layout-dashboard"></i>
-            <span>Dashboard</span>
-        </a>
-        <a href="#" class="mobile-nav-link" onclick="switchTab('transactions')">
-            <i data-lucide="arrow-up-right"></i>
-            <span>Transas.</span>
-        </a>
-        <a href="#" class="mobile-nav-link" onclick="switchTab('daily')">
-            <i data-lucide="zap"></i>
-            <span>Diario</span>
-        </a>
-        <a href="#" class="mobile-nav-link" onclick="switchTab('savings')">
-            <i data-lucide="piggy-bank"></i>
-            <span>Ahorro</span>
-        </a>
-        <a href="#" class="mobile-nav-link" onclick="switchTab('settings')">
-            <i data-lucide="settings"></i>
-            <span>Config.</span>
-        </a>
-    </nav>
+    <!-- Overlay para el Drawer -->
+    <div id="drawer-overlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
     
     <!-- Main Logic -->
     <script src="main.js"></script>

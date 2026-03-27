@@ -8,6 +8,16 @@ let state = {
 
 document.addEventListener('DOMContentLoaded', () => {
     loadState();
+    
+    // Set default filter dates (current month)
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+    
+    document.getElementById('filter-start').value = firstDay;
+    document.getElementById('filter-end').value = lastDay;
+    document.getElementById('tx-date').value = now.toISOString().split('T')[0];
+
     updateUI();
     initChart();
     
@@ -40,15 +50,32 @@ function clearAllData() {
     }
 }
 
-// --- UI Navigation ---
+// --- UI Navigation & Drawer ---
+
+function toggleDrawer() {
+    const drawer = document.getElementById('mobile-drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    
+    if (drawer.classList.contains('open')) {
+        drawer.classList.remove('open');
+        overlay.classList.remove('active');
+    } else {
+        drawer.classList.add('open');
+        overlay.classList.add('active');
+    }
+}
+
+function closeDrawer() {
+    document.getElementById('mobile-drawer').classList.remove('open');
+    document.getElementById('drawer-overlay').classList.remove('active');
+}
 
 function switchTab(tabId) {
-    // Update active links (Desktop & Mobile)
-    const links = [...document.querySelectorAll('.nav-link'), ...document.querySelectorAll('.mobile-nav-link')];
+    // Update active links (Desktop Sidebar & Mobile Drawer)
+    const links = [...document.querySelectorAll('.nav-link'), ...document.querySelectorAll('.drawer-link')];
     
     links.forEach(link => {
         link.classList.remove('active');
-        // Match by text or by the onclick attribute containing the tabId
         const onClickAttr = link.getAttribute('onclick') || '';
         if (onClickAttr.includes(`'${tabId}'`)) {
             link.classList.add('active');
@@ -61,19 +88,21 @@ function switchTab(tabId) {
     });
     document.getElementById(`${tabId}-section`).style.display = 'block';
 
-    // Update Header
+    // Update Header Text
     const titles = {
-        'dashboard': { title: 'Dashboard', sub: 'Bienvenido de nuevo, acá está tu resumen.' },
-        'transactions': { title: 'Transacciones', sub: 'Historial completo de tus finanzas.' },
-        'daily': { title: 'Gasto Diario', sub: 'Registra tus gastos rápidos de hoy.' },
-        'savings': { title: 'Ahorro', sub: 'Tus metas y planes a largo plazo.' },
-        'settings': { title: 'Configuración', sub: 'Gestión de datos y personalización.' }
+        'dashboard': { title: 'Dashboard', sub: 'Resumen financiero por periodo.' },
+        'transactions': { title: 'Transacciones', sub: 'Historial completo de movimientos.' },
+        'daily': { title: 'Gasto Diario', sub: 'Registro rápido del día.' },
+        'savings': { title: 'Ahorro', sub: 'Metas y objetivos de ahorro.' },
+        'settings': { title: 'Configuración', sub: 'Copia de seguridad y datos.' }
     };
     
     document.getElementById('page-title').innerText = titles[tabId].title;
     document.getElementById('page-subtitle').innerText = titles[tabId].sub;
 
     if (tabId === 'dashboard') updateChart();
+    
+    closeDrawer();
 }
 
 // --- Modals ---
@@ -94,6 +123,7 @@ function handleNewTransaction(e) {
     const category = document.getElementById('tx-category').value;
     const desc = document.getElementById('tx-desc').value;
     const amount = parseFloat(document.getElementById('tx-amount').value);
+    const dateInput = document.getElementById('tx-date').value;
     
     const newTx = {
         id: Date.now(),
@@ -101,13 +131,14 @@ function handleNewTransaction(e) {
         category,
         description: desc,
         amount,
-        date: new Date().toISOString()
+        date: dateInput // Uses the user-selected date
     };
     
     state.transactions.push(newTx);
     saveState();
     closeModal('tx-modal');
     document.getElementById('main-tx-form').reset();
+    document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
 }
 
 function handleDailyExpense(e) {
@@ -121,7 +152,7 @@ function handleDailyExpense(e) {
         category: 'other',
         description: desc,
         amount,
-        date: new Date().toISOString()
+        date: new Date().toISOString().split('T')[0]
     };
     
     state.transactions.push(newTx);
@@ -155,68 +186,72 @@ function addContribution(id) {
     if (saving) {
         saving.current += amount;
         
-        // Also add a transaction record
         state.transactions.push({
             id: Date.now(),
             type: 'expense',
             category: 'other',
             description: `Ahorro: ${saving.name}`,
             amount: amount,
-            date: new Date().toISOString()
+            date: new Date().toISOString().split('T')[0]
         });
         
         saveState();
     }
 }
 
-// --- UI Updates ---
+// --- UI Updates & Filtering ---
+
+function getFilteredTransactions() {
+    const start = document.getElementById('filter-start').value;
+    const end = document.getElementById('filter-end').value;
+    
+    if (!start || !end) return state.transactions;
+    
+    return state.transactions.filter(tx => {
+        const txDate = tx.date; // already YYYY-MM-DD
+        return txDate >= start && txDate <= end;
+    });
+}
 
 function updateUI() {
+    const filtered = getFilteredTransactions();
+    
     const totalBalance = state.transactions.reduce((acc, tx) => 
         tx.type === 'income' ? acc + tx.amount : acc - tx.amount, 0);
     
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const todayStr = now.toISOString().split('T')[0];
-    
-    const monthIncome = state.transactions
-        .filter(tx => {
-            const d = new Date(tx.date);
-            return tx.type === 'income' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        })
+    const periodIncome = filtered
+        .filter(tx => tx.type === 'income')
         .reduce((acc, tx) => acc + tx.amount, 0);
         
-    const monthExpense = state.transactions
-        .filter(tx => {
-            const d = new Date(tx.date);
-            return tx.type === 'expense' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        })
+    const periodExpense = filtered
+        .filter(tx => tx.type === 'expense')
         .reduce((acc, tx) => acc + tx.amount, 0);
 
+    const todayStr = new Date().toISOString().split('T')[0];
     const dailyTotal = state.transactions
-        .filter(tx => tx.type === 'expense' && tx.date.split('T')[0] === todayStr)
+        .filter(tx => tx.type === 'expense' && tx.date === todayStr)
         .reduce((acc, tx) => acc + tx.amount, 0);
 
     // Update Dashboard Cards
     document.getElementById('total-balance').innerText = formatCurrency(totalBalance);
-    document.getElementById('month-income').innerText = formatCurrency(monthIncome);
-    document.getElementById('month-expense').innerText = formatCurrency(monthExpense);
+    document.getElementById('month-income').innerText = formatCurrency(periodIncome);
+    document.getElementById('month-expense').innerText = formatCurrency(periodExpense);
     document.getElementById('daily-total').innerText = formatCurrency(dailyTotal);
 
-    renderTransactionLists();
+    renderTransactionLists(filtered);
     renderDailyList(todayStr);
     renderSavings();
     
-    // Re-init icons
+    updateChart(filtered);
+    
     if (window.lucide) lucide.createIcons();
 }
 
-function renderTransactionLists() {
+function renderTransactionLists(filtered) {
     const recentList = document.getElementById('recent-transactions');
     const fullList = document.getElementById('full-transaction-list');
     
-    const sorted = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = [...filtered].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
     
     const createItemHTML = (tx) => `
         <div class="transaction-item">
@@ -225,8 +260,8 @@ function renderTransactionLists() {
                     <i data-lucide="${tx.type === 'income' ? 'arrow-down-left' : 'arrow-up-right'}" style="color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}"></i>
                 </div>
                 <div class="tx-details">
-                    <span class="name">${tx.description}</span>
-                    <span class="date">${formatDate(tx.date)} • ${tx.category}</span>
+                    <span class="name" style="color: white;">${tx.description}</span>
+                    <span class="date">${tx.date} • ${tx.category}</span>
                 </div>
             </div>
             <div class="amount" style="color: ${tx.type === 'income' ? 'var(--success)' : 'var(--danger)'}">
@@ -235,17 +270,17 @@ function renderTransactionLists() {
         </div>
     `;
 
-    recentList.innerHTML = sorted.slice(0, 5).map(createItemHTML).join('') || '<p class="text-muted" style="text-align:center; padding: 2rem;">No hay transacciones.</p>';
+    recentList.innerHTML = sorted.slice(0, 5).map(createItemHTML).join('') || '<p class="text-muted" style="text-align:center; padding: 2rem;">No hay transacciones en este periodo.</p>';
     fullList.innerHTML = sorted.map(createItemHTML).join('') || '<p class="text-muted" style="text-align:center; padding: 2rem;">No hay transacciones.</p>';
 }
 
 function renderDailyList(todayStr) {
     const list = document.getElementById('daily-list');
-    const todayTx = state.transactions.filter(tx => tx.type === 'expense' && tx.date.split('T')[0] === todayStr);
+    const todayTx = state.transactions.filter(tx => tx.type === 'expense' && tx.date === todayStr);
     
     list.innerHTML = todayTx.map(tx => `
         <div class="transaction-item">
-            <span class="name">${tx.description}</span>
+            <span class="name" style="color: white;">${tx.description}</span>
             <span class="amount expense">${formatCurrency(tx.amount)}</span>
         </div>
     `).join('') || '<p class="text-muted" style="text-align:center;">Sin gastos hoy.</p>';
@@ -258,8 +293,8 @@ function renderSavings() {
         return `
             <div class="saving-card">
                 <div class="saving-info">
-                    <strong>${s.name}</strong>
-                    <span>${formatCurrency(s.current)} / ${formatCurrency(s.target)}</span>
+                    <strong style="color: white;">${s.name}</strong>
+                    <span style="color: var(--text-muted);">${formatCurrency(s.current)} / ${formatCurrency(s.target)}</span>
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-bar" style="width: ${progress}%"></div>
@@ -276,11 +311,6 @@ function renderSavings() {
 
 function formatCurrency(val) {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(val);
-}
-
-function formatDate(dateStr) {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('es-CL', { day: '2-digit', month: 'short' });
 }
 
 // --- Chart.js Integration ---
@@ -306,21 +336,20 @@ function initChart() {
             plugins: {
                 legend: {
                     position: 'bottom',
-                    labels: { color: '#94a3b8', font: { family: 'Outfit' } }
+                    labels: { color: '#ffffff', font: { family: 'Outfit' } }
                 }
             },
             cutout: '70%'
         }
     });
-    updateChart();
 }
 
-function updateChart() {
+function updateChart(filteredData) {
     if (!expenseChart) return;
     
-    // Group expenses by category
+    const displayData = filteredData || getFilteredTransactions();
     const categories = {};
-    const expenses = state.transactions.filter(tx => tx.type === 'expense');
+    const expenses = displayData.filter(tx => tx.type === 'expense');
     
     expenses.forEach(tx => {
         categories[tx.category] = (categories[tx.category] || 0) + tx.amount;
@@ -331,19 +360,16 @@ function updateChart() {
     expenseChart.update();
 }
 
-// --- Export / Import (GitHub Persistence) ---
+// --- Export / Import ---
 
 function exportData() {
     const dataStr = JSON.stringify(state, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    
     const link = document.createElement('a');
     link.href = url;
     link.download = `finanzas_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
 }
 
 function importData(event) {
@@ -354,16 +380,13 @@ function importData(event) {
     reader.onload = (e) => {
         try {
             const importedState = JSON.parse(e.target.result);
-            if (importedState.transactions && importedState.savings) {
+            if (importedState.transactions) {
                 state = importedState;
                 saveState();
-                alert('Datos importados correctamente.');
                 location.reload();
-            } else {
-                throw new Error('Formato de archivo inválido.');
             }
         } catch (err) {
-            alert('Error al importar: ' + err.message);
+            alert('Error al importar');
         }
     };
     reader.readAsText(file);
