@@ -142,6 +142,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+const CATEGORY_ES = {
+  salary: 'Salario',
+  food: 'Alimentación',
+  transport: 'Transporte',
+  housing: 'Vivienda',
+  health: 'Salud',
+  entertainment: 'Entretenimiento',
+  other: 'Otros'
+};
+
+function translateCategory(cat) {
+  return CATEGORY_ES[cat] || cat;
+}
+
 function today() { return new Date().toISOString().split('T')[0]; }
 
 
@@ -407,7 +421,7 @@ function txItemHTML(tx) {
         </div>
         <div>
           <div class="tx-name">${tx.description}</div>
-          <div class="tx-meta">${tx.date} · ${tx.category}</div>
+          <div class="tx-meta">${tx.date} · ${translateCategory(tx.category)}</div>
         </div>
       </div>
       <div style="display:flex; align-items:center; gap:0.75rem;">
@@ -725,7 +739,8 @@ function updateCharts() {
   const filtered = getFiltered();
   const cats = {};
   filtered.filter(t => t.type === 'expense').forEach(t => {
-    cats[t.category] = (cats[t.category] || 0) + t.amount;
+    const catName = translateCategory(t.category);
+    cats[catName] = (cats[catName] || 0) + t.amount;
   });
   donutChart.data.labels = Object.keys(cats);
   donutChart.data.datasets[0].data = Object.values(cats);
@@ -821,7 +836,7 @@ function renderReusePanel() {
         <span class="tx-amount ${tx.type}" style="font-size:0.78rem;">${tx.type === 'income' ? '▲ Ingreso' : '▼ Gasto'}</span>
       </td>
       <td style="padding:0.6rem 0.5rem; color:var(--text); font-size:0.875rem;">${tx.description}</td>
-      <td style="padding:0.6rem 0.5rem; color:var(--text-muted); font-size:0.8rem;">${tx.category}</td>
+      <td style="padding:0.6rem 0.5rem; color:var(--text-muted); font-size:0.8rem;">${translateCategory(tx.category)}</td>
       <td style="padding:0.6rem 0.5rem;">
         <input type="number" id="reuse-amt-${i}" value="${tx.amount}" min="1"
           style="width:110px; background:var(--bg-card2); border:1px solid var(--border); border-radius:6px;
