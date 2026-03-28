@@ -371,6 +371,21 @@ function onDailyExpense(e) {
 
 function deleteTransaction(id) {
   if (!confirm('¿Eliminar esta transacción?')) return;
+  const tx = state.transactions.find(t => t.id === id);
+  if (tx && tx.savingId) {
+    const saving = state.savings.find(s => s.id === tx.savingId);
+    if (saving) {
+      saving.current = Math.max(0, saving.current - tx.amount);
+    }
+  } else if (tx && tx.description.startsWith('Ahorro: ')) {
+    // Fallback if they created a contribution before we added savingId
+    const sName = tx.description.replace('Ahorro: ', '').trim();
+    const saving = state.savings.find(s => s.name === sName);
+    if (saving) {
+      saving.current = Math.max(0, saving.current - tx.amount);
+    }
+  }
+
   state.transactions = state.transactions.filter(tx => tx.id !== id);
   saveState();
   renderAll();
@@ -451,7 +466,8 @@ function addContribution(id) {
       category:'other',
       description:`Ahorro: ${saving.name}`,
       amount,
-      date: today()
+      date: today(),
+      savingId: saving.id
     });
     saveState();
     renderAll();
@@ -482,6 +498,25 @@ function renderSavings() {
   if (!el) return;
   el.innerHTML = state.savings.map(s => {
     const pct = Math.min((s.current / s.target)*100, 100).toFixed(0);
+    
+    // Buscar los detalles (aportes) para esta meta
+    const myTxs = state.transactions.filter(t => t.savingId === s.id || (t.description === `Ahorro: ${s.name}` && !t.savingId));
+    let detailsHtml = '';
+    if (myTxs.length > 0) {
+      detailsHtml = '<div style="margin-top:0.75rem; padding:0.5rem; background:rgba(0,0,0,0.15); border-radius:6px;">' + 
+        '<div style="font-size:0.7rem; color:var(--text-faint); margin-bottom:4px; text-transform:uppercase;">Detalles de Aportes</div>' +
+        myTxs.map(t => 
+          `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.8rem; border-bottom:1px solid var(--border); padding:4px 0;">
+             <span style="color:var(--text-muted);">${t.date}</span>
+             <div style="display:flex; gap:0.5rem; align-items:center;">
+               <span style="font-weight:600; color:var(--text);">${clp(t.amount)}</span>
+               <button onclick="deleteTransaction(${t.id})" title="Eliminar este aporte" style="color:var(--danger); background:none; border:none; cursor:pointer;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">✖</button>
+             </div>
+           </div>`
+        ).join('') + 
+      '</div>';
+    }
+
     return `
       <div class="saving-row">
         <div class="saving-header">
@@ -500,6 +535,7 @@ function renderSavings() {
         <div class="progress-bar mt-1">
           <div class="progress-fill" style="width:${pct}%"></div>
         </div>
+        ${detailsHtml}
       </div>`;
   }).join('') || `<div class="empty-state">Crea tu primera meta de ahorro 🏦</div>`;
 }
