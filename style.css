@@ -345,6 +345,17 @@ body {
 
 .chart-wrapper { height: 220px; position:relative; }
 
+.suggestion-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .suggestion-grid { grid-template-columns: 1fr; }
+}
+
 /* ─── TRANSACTION LIST ───────────────────────── */
 .tx-list-header {
   display: flex;
@@ -430,6 +441,30 @@ body {
   border-radius: 3px;
   transition: width 0.5s ease;
 }
+
+.log-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.log-item:last-child { border-bottom: none; }
+
+.log-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.log-badge.high { background: rgba(16,185,129,0.15); color: var(--success); }
+.log-badge.medium { background: rgba(245,158,11,0.15); color: var(--warning); }
+.log-badge.low { background: rgba(244,63,94,0.15); color: var(--danger); }
 
 /* ─── BUTTONS ────────────────────────────────── */
 .btn {

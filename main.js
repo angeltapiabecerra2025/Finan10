@@ -124,6 +124,7 @@ function resetUser() {
 let state = {
   transactions: [],
   savings: [],
+  savingsLog: [],
   privacy: { balance: false, income: false }
 };
 
@@ -133,6 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('tx-form').addEventListener('submit', onNewTransaction);
   document.getElementById('daily-form').addEventListener('submit', onDailyExpense);
   document.getElementById('savings-form').addEventListener('submit', onNewSaving);
+  const logForm = document.getElementById('log-saving-form');
+  if (logForm) logForm.addEventListener('submit', onLogSaving);
 });
 
 
@@ -165,14 +168,15 @@ function loadState() {
     const parsed = JSON.parse(raw);
     state = { ...state, ...parsed };
     if (!state.privacy) state.privacy = { balance:false, income:false };
+    if (!state.savingsLog) state.savingsLog = [];
   } else {
-    state = { transactions:[], savings:[], privacy:{ balance:false, income:false } };
+    state = { transactions:[], savings:[], savingsLog:[], privacy:{ balance:false, income:false } };
   }
 }
 
 function clearAllData() {
   if (!confirm('¿Borrar TODOS los datos de este perfil? Esta acción es irreversible.')) return;
-  state = { transactions:[], savings:[], privacy:{ balance:false, income:false } };
+  state = { transactions:[], savings:[], savingsLog:[], privacy:{ balance:false, income:false } };
   saveState();
   location.reload();
 }
@@ -306,6 +310,7 @@ function renderAll() {
   renderFullList();
   renderDailyList();
   renderSavings();
+  renderSavingsHistory();
   updateCharts();
 }
 
@@ -474,15 +479,95 @@ function renderSavings() {
   }).join('') || `<div class="empty-state">Crea tu primera meta de ahorro 🏦</div>`;
 }
 
+// ─── Savings Log (Historial) ──────────────────────────────────────────────────
+let currentSuggestedSavings = 0;
+
+function openLogSavingModal() {
+  const currentMonth = today().substring(0, 7);
+  document.getElementById('log-month').value = currentMonth;
+  document.getElementById('log-suggested').value = clp(currentSuggestedSavings);
+  document.getElementById('log-suggested').dataset.val = currentSuggestedSavings;
+  openModal('log-saving-modal');
+}
+
+function onLogSaving(e) {
+  e.preventDefault();
+  const month = document.getElementById('log-month').value;
+  const realAmount = parseFloat(document.getElementById('log-amount').value);
+  const suggestedAmount = parseFloat(document.getElementById('log-suggested').dataset.val || 0);
+
+  if (!month || isNaN(realAmount) || realAmount < 0) return;
+
+  const existingIdx = state.savingsLog.findIndex(l => l.month === month);
+  const logObj = {
+    id: Date.now(),
+    month,
+    suggested: suggestedAmount,
+    real: realAmount,
+    percentage: suggestedAmount > 0 ? (realAmount / suggestedAmount) * 100 : (realAmount > 0 ? 100 : 0)
+  };
+
+  if (existingIdx > -1) {
+    state.savingsLog[existingIdx] = logObj;
+  } else {
+    state.savingsLog.push(logObj);
+  }
+
+  saveState();
+  closeModal('log-saving-modal');
+  document.getElementById('log-saving-form').reset();
+  renderAll();
+}
+
+function renderSavingsHistory() {
+  const listEl = document.getElementById('savings-log-list');
+  if (!listEl) return;
+  
+  const sorted = [...state.savingsLog].sort((a,b) => b.month.localeCompare(a.month)); // newest first
+  if (!sorted.length) {
+    listEl.innerHTML = `<div class="empty-state">No hay logros registrados aún. ¡Registra el de este mes!</div>`;
+    return;
+  }
+  
+  listEl.innerHTML = sorted.map(log => {
+      const formatMonth = yyyymm => {
+        const [y, m] = yyyymm.split('-');
+        const date = new Date(y, m - 1);
+        return date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      };
+      
+      let badgeClass = 'low';
+      if (log.percentage >= 90) badgeClass = 'high';
+      else if (log.percentage >= 50) badgeClass = 'medium';
+      
+      const icon = log.percentage >= 90 ? '🏆' : (log.percentage >= 50 ? '👍' : '⚠️');
+      
+      return `
+        <div class="log-item">
+          <div>
+            <div style="font-weight:600; text-transform:capitalize;">${formatMonth(log.month)}</div>
+            <div class="text-sm text-muted">Sugerido: ${clp(log.suggested)}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-weight:700; color:var(--text);">${clp(log.real)}</div>
+            <div class="log-badge ${badgeClass} mt-1">${icon} ${log.percentage.toFixed(0)}%</div>
+          </div>
+        </div>
+      `;
+  }).join('');
+}
+
 // ─── Charts ───────────────────────────────────────────────────────────────────
 let donutChart = null;
 let barChart   = null;
+let projectionChart = null;
 
 const CHART_COLORS = ['#6366f1','#10b981','#f59e0b','#f43f5e','#8b5cf6','#ec4899','#3b82f6','#14b8a6'];
 
 function initCharts() {
   const donutCanvas = document.getElementById('chart-donut');
   const barCanvas   = document.getElementById('chart-bar');
+  const projCanvas  = document.getElementById('chart-projection');
   if (!donutCanvas || !barCanvas) return;
 
   donutChart = new Chart(donutCanvas, {
@@ -501,10 +586,10 @@ function initCharts() {
   barChart = new Chart(barCanvas, {
     type: 'bar',
     data: {
-      labels: ['Ingresos','Gastos'],
+      labels: [],
       datasets:[
-        { label:'Periodo Anterior', data:[0,0], backgroundColor:'rgba(148,163,184,0.3)', borderRadius:6 },
-        { label:'Periodo Actual',   data:[0,0], backgroundColor:['#10b981','#f43f5e'],   borderRadius:6 }
+        { label:'Ingresos', data:[], backgroundColor:'#10b981', borderRadius:6 },
+        { label:'Gastos',   data:[], backgroundColor:'#f43f5e',   borderRadius:6 }
       ]
     },
     options: {
@@ -517,6 +602,27 @@ function initCharts() {
       plugins: { legend:{ labels:{ color:'#94a3b8', font:{ family:'Outfit', size:11 }, padding:12 } } }
     }
   });
+
+  if (projCanvas) {
+    projectionChart = new Chart(projCanvas, {
+      type: 'line',
+      data: {
+        labels: ['Mes 1','Mes 2','Mes 3','Mes 4','Mes 5','Mes 6'],
+        datasets:[
+          { label:'Ahorro Acumulado Proyectado', data:[0,0,0,0,0,0], borderColor: '#818cf8', backgroundColor: 'rgba(129,140,248,0.2)', fill: true, tension: 0.4, borderWidth: 2 }
+        ]
+      },
+      options: {
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{
+          x:{ ticks:{ color:'#94a3b8', font:{ family:'Outfit' } }, grid:{ display:false } },
+          y:{ ticks:{ color:'#94a3b8', font:{ family:'Outfit' }, callback: v => clp(v) }, grid:{ color:'rgba(255,255,255,0.04)' } }
+        },
+        plugins: { legend:{ display: false }, tooltip: { bodyFont: { family: 'Outfit'}, titleFont: { family: 'Outfit'} } }
+      }
+    });
+  }
 
   updateCharts();
 }
@@ -533,24 +639,60 @@ function updateCharts() {
   donutChart.data.datasets[0].data = Object.values(cats);
   donutChart.update();
 
-  // Comparative bar chart
-  const start = document.getElementById('filter-start').value;
-  const end   = document.getElementById('filter-end').value;
-  if (start && end) {
-    const diff      = new Date(end) - new Date(start);
-    const prevEnd   = new Date(new Date(start) - 86400000);
-    const prevStart = new Date(prevEnd - diff);
+  // Monthly bar chart logic
+  const groupedByMonth = {};
+  filtered.forEach(tx => {
+    const month = tx.date.substring(0, 7); // YYYY-MM
+    if (!groupedByMonth[month]) groupedByMonth[month] = { income: 0, expense: 0 };
+    groupedByMonth[month][tx.type] += tx.amount;
+  });
 
-    const pFmt  = d => d.toISOString().split('T')[0];
-    const prev  = getFiltered(pFmt(prevStart), pFmt(prevEnd));
+  const sortedMonths = Object.keys(groupedByMonth).sort();
+  const formatMonth = yyyymm => {
+    const [y, m] = yyyymm.split('-');
+    const date = new Date(y, m - 1);
+    return date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+  };
 
-    const sum = (arr, type) => arr.filter(t => t.type === type).reduce((a,t) => a+t.amount, 0);
+  barChart.data.labels = sortedMonths.map(formatMonth);
+  barChart.data.datasets[0].data = sortedMonths.map(m => groupedByMonth[m].income);
+  barChart.data.datasets[1].data = sortedMonths.map(m => groupedByMonth[m].expense);
+  barChart.update();
 
-    barChart.data.datasets[0].data = [sum(prev, 'income'),    sum(prev, 'expense')];
-    barChart.data.datasets[1].data = [sum(filtered, 'income'), sum(filtered, 'expense')];
-    barChart.update();
+  calculateSavingsSuggestion(filtered);
+}
+
+function calculateSavingsSuggestion(filtered) {
+  const incomes = filtered.filter(t => t.type === 'income').reduce((a,t) => a+t.amount, 0);
+  const expenses = filtered.filter(t => t.type === 'expense').reduce((a,t) => a+t.amount, 0);
+  
+  const months = new Set(filtered.map(t => t.date.substring(0,7))).size || 1;
+  const avgIncome = incomes / months;
+  const avgExpense = expenses / months;
+  const surplus = avgIncome - avgExpense;
+  
+  // Suggest 50% of the surplus
+  currentSuggestedSavings = surplus > 0 ? surplus * 0.5 : 0;
+  
+  const elSurplus = document.getElementById('suggest-surplus');
+  const elAmount = document.getElementById('suggest-amount');
+  if (elSurplus) elSurplus.textContent = clp(surplus > 0 ? surplus : 0);
+  if (elAmount) {
+     elAmount.innerHTML = `${clp(currentSuggestedSavings)} <span style="font-size:0.8rem; font-weight:500; color:var(--text-faint);">/ mes</span>`;
+  }
+  
+  if (projectionChart) {
+    let accumulated = 0;
+    const projectedData = [];
+    for(let i=1; i<=6; i++) {
+       accumulated += currentSuggestedSavings;
+       projectedData.push(accumulated);
+    }
+    projectionChart.data.datasets[0].data = projectedData;
+    projectionChart.update();
   }
 }
+
 
 // ─── Reutilizar Periodo ───────────────────────────────────────────────────────
 
@@ -666,6 +808,7 @@ function importData(e) {
       if (Array.isArray(imported.transactions)) {
         state = imported;
         if (!state.privacy) state.privacy = { balance:false, income:false };
+        if (!state.savingsLog) state.savingsLog = [];
         saveState();
         location.reload();
       } else { alert('Archivo JSON inválido.'); }

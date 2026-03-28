@@ -200,8 +200,26 @@
             <div class="chart-wrapper"><canvas id="chart-donut"></canvas></div>
           </div>
           <div class="card">
-            <div class="card-title">Comparativa de Periodos</div>
+            <div class="card-title">Evolución Mensual (Ingresos vs Gastos)</div>
             <div class="chart-wrapper"><canvas id="chart-bar"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Savings Suggestion & Projection -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <div class="card-title">Sugerencia y Proyección de Ahorro</div>
+          <div class="suggestion-grid">
+            <div>
+              <p class="text-sm text-muted">Remanente promedio del periodo:</p>
+              <h3 id="suggest-surplus" style="font-size:1.8rem; font-weight:800; color:var(--text);">$0</h3>
+              <p class="text-sm text-muted mt-2">Sugerencia (50% del remanente):</p>
+              <h4 id="suggest-amount" style="font-size:1.4rem; font-weight:700; color:var(--primary-light);">$0 <span style="font-size:0.8rem; font-weight:500; color:var(--text-faint);">/ mes</span></h4>
+              <button class="btn btn-primary mt-3" style="width:100%" onclick="openLogSavingModal()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Registrar Logro Mensual
+              </button>
+            </div>
+            <div class="chart-wrapper"><canvas id="chart-projection"></canvas></div>
           </div>
         </div>
 
@@ -276,6 +294,13 @@
             <div class="card-title" style="margin-bottom:1rem;">Mis Metas</div>
             <div id="savings-list"></div>
           </div>
+        </div>
+        
+        <!-- Historial de Logros -->
+        <div class="card mt-2">
+          <div class="card-title" style="margin-bottom:1rem;">Historial de Logros Mensuales</div>
+          <p class="text-sm text-muted mb-2">Aquí verás reflejado mes a mes tu nivel de compromiso con tu plan de ahorro sugerido.</p>
+          <div id="savings-log-list"></div>
         </div>
       </section>
 
@@ -450,6 +475,34 @@
         <input type="number" id="tx-amount" placeholder="0" required min="1">
       </div>
       <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">Guardar Transacción</button>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Registrar Logro de Ahorro -->
+<div class="modal-backdrop" id="log-saving-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Registrar Logro Mensual</h3>
+      <button class="modal-close" type="button" onclick="closeModal('log-saving-modal')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="log-saving-form">
+      <p class="text-sm text-muted mb-3" id="log-saving-desc">Registra cuánto lograste ahorrar este mes respecto a la sugerencia del sistema.</p>
+      <div class="form-group">
+        <label>Mes a Registrar</label>
+        <input type="month" id="log-month" required>
+      </div>
+      <div class="form-group">
+        <label>Ahorro Sugerido del Mes</label>
+        <input type="text" id="log-suggested" readonly disabled style="opacity:0.8;">
+      </div>
+      <div class="form-group">
+        <label>Ahorro Real Alcanzado</label>
+        <input type="number" id="log-amount" placeholder="0" required min="0">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem;">Guardar Logro</button>
     </form>
   </div>
 </div>
