@@ -881,11 +881,14 @@ function applyReuse() {
 
 // ─── Backup ───────────────────────────────────────────────────────────────────
 function exportData() {
+  const user = getSavedUser();
+  const userName = user && user.name ? user.name.replace(/\s+/g, '_').toLowerCase() : 'respaldo';
+  
   const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `financeang-backup-${today()}.json`;
+  a.download = `financeang_${userName}_${today()}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }
